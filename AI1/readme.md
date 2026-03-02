@@ -11,9 +11,9 @@
 - Code Language -> Python
 - Libraries: 
 {
-    [NumPy](https://numpy.org/doc/stable/user/) -> mathematical functions
-    [Pandas](https://pandas.pydata.org/pandas-docs/stable/#) -> data structures and analysis
-    [Scipy](https://scipy.org/) -> statistical analysis
-    [PyGame](https://www.pygame.org/docs/) -> graphical engine
-    [Matplotlib](https://matplotlib.org/stable/users/) -> data representation 
+    [NumPy](https://numpy.org/doc/stable/user/) -> mathematical functions;
+    [Pandas](https://pandas.pydata.org/pandas-docs/stable/#) -> data structures and analysis;
+    [Scipy](https://scipy.org/) -> statistical analysis;
+    [PyGame](https://www.pygame.org/docs/) -> graphical engine;
+    [Matplotlib](https://matplotlib.org/stable/users/) -> data representation;
 }
