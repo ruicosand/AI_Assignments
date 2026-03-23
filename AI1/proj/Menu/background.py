@@ -1,5 +1,4 @@
 import pygame
-from pygame.locals import *
 import random
 
 class Particle:
@@ -22,6 +21,7 @@ class Particle:
             self.y = screen_height + self.radius
             self.x = random.randint(100, 500)
 
+
 class Background:
     def __init__(self, screen_width, screen_height):
         self.screen_width = screen_width
@@ -37,7 +37,7 @@ class Background:
         ]
 
         try:
-            raw_image = pygame.image.load("background.png").convert()
+            raw_image = pygame.image.load("images/background.png").convert()
             self.image = pygame.transform.scale(raw_image, (self.screen_width, self.screen_height))
         except:
             self.image = pygame.Surface((self.screen_width, self.screen_height))
@@ -59,47 +59,4 @@ class Background:
         for particle in self.particles:
             particle.draw(surface)
 
-class App:
-    def __init__(self):
-        self._running = True
-        self._display_surf = None
-        self.size = self.width, self.height = 600, 800
-        self.clock = None
 
-    def on_init(self):
-        pygame.init()
-        self._display_surf = pygame.display.set_mode(self.size, pygame.HWSURFACE | pygame.DOUBLEBUF)
-        self.background = Background(self.width, self.height)
-        self.clock = pygame.time.Clock()
-        self._running = True
-        return True
-
-    def on_event(self, event):
-        if event.type == pygame.QUIT:
-            self._running = False
-
-    def on_loop(self):
-        self.background.update()
-
-    def on_render(self):
-        self.background.draw(self._display_surf)
-        pygame.display.update()
-
-    def on_cleanup(self):
-        pygame.quit()
-
-    def on_execute(self):
-        if not self.on_init():
-            self._running = False
-
-        while self._running:
-            self.clock.tick(60)
-            for event in pygame.event.get():
-                self.on_event(event)
-            self.on_loop()
-            self.on_render()
-        self.on_cleanup()
-
-if __name__ == "__main__":
-    theApp = App()
-    theApp.on_execute()
