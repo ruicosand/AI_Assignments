@@ -46,4 +46,11 @@ class Menu:
         
 
     def handle_click(self, mouse_pos):
-        return self.play_btn.rect.collidepoint(mouse_pos)
+        # Check collision for each button using their internal .rect
+        if self.play_btn.rect.collidepoint(mouse_pos):
+            return "play"
+        if self.model_btn.rect.collidepoint(mouse_pos):
+            return "model"
+        if self.exit_btn.rect.collidepoint(mouse_pos):
+            return "exit"
+        return None

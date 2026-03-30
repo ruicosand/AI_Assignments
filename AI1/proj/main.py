@@ -27,12 +27,23 @@ class App:
         
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.state == "menu":
-                if self.menu.handle_click(event.pos):
+                    # handle_click returns "play", "model", or "exit"
+                action = self.menu.handle_click(event.pos)
+                
+                if action == "exit":
+                    # This breaks the main while loop and closes the window
+                    self._running = False 
+                
+                elif action == "play":
                     self.state = "game"
                     self.game = Game(self.width, self.height)
-            if self.state == "game":
-                if self.game.handle_click(event.pos):
-                    self.pending_win = 2 
+                    
+            elif self.state == "game":
+                action = self.game.handle_click(event.pos)
+                if action == "won":
+                    self.pending_win = 2
+                elif action == "exit":
+                    self.state = "menu"
 
 
     def on_loop(self):

@@ -1,6 +1,8 @@
 import pygame 
 from game_logic import GameController
 from Menu.background import Background
+from objects.shelf import Shelf
+from objects.x_button import XButton
 
 def calculate_space(width,size):
         total_space = ( size / 3) * 60
@@ -16,6 +18,7 @@ class Game:
         self.width = width
         self.height = height
         self.background = Background(width,height)
+        self.x = XButton(width,height)
         self.tubes_positions = []
         self.setup_tubes()
     
@@ -39,9 +42,8 @@ class Game:
 
     def draw(self,surface):
         self.background.draw(surface)
-
-
-
+        self.x.draw(surface)
+        
         for i, pos in enumerate(self.tubes_positions):
             if i == self.controller.selected_tube:
                 border_color = (255, 255, 255)
@@ -58,6 +60,10 @@ class Game:
 
 
     def handle_click(self,pos):
+        
+        if self.x.rect.collidepoint(pos):
+            return "exit"
+        
         tube_selected = None
         
         for i, position in enumerate(self.tubes_positions):
@@ -70,7 +76,10 @@ class Game:
             return False
        
         self.controller.handle_click(tube_selected)
-        return self.controller.is_won()
+        
+        if (self.controller.is_won()):
+            return "won"
+        return None
 
     
 
