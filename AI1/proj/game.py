@@ -1,5 +1,6 @@
 import pygame 
 from game_logic import GameController
+from waterSort import WaterSort
 from Menu.background import Background
 
 def calculate_space(width,size):
@@ -58,6 +59,7 @@ class Game:
 
 
     def handle_click(self,pos):
+        waterSort = WaterSort(self.controller.board)
         tube_selected = None
         
         for i, position in enumerate(self.tubes_positions):
@@ -70,7 +72,7 @@ class Game:
             return False
        
         self.controller.handle_click(tube_selected)
-        return self.controller.is_won()
+        return waterSort.is_won()
 
     
 
