@@ -1,8 +1,9 @@
-import pygame 
-from Menu.background import Background
+import pygame
+from background import Background
+from menu import Button
 
 
-class Menu: 
+class SolverStats: 
     def __init__(self, screen_width, scree_height):
         self.background = Background(screen_width, scree_height)
         self.button = Button(40,40,100,40,(0,255,255))
@@ -18,4 +19,3 @@ class Menu:
             rect = pygame.Rect(self.button.x, self.button.y, self.button.width, self.button.height)
             return rect.collidepoint(mouse_pos)
         
-

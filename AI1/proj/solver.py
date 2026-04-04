@@ -1,6 +1,6 @@
 from waterSort import TreeNode
 from waterSort import WaterSort
-
+import time
 
 
 class Solver:
@@ -8,6 +8,10 @@ class Solver:
 
     def __init__(self, inital_state):
         self.initialBoard = inital_state
+        self.time_execution = 0
+        self.expanded_nodes = 0
+        self.generated_nodes = 0
+
 
     def heuristic_1(self, state):
         changes_in_tube = 0
@@ -19,7 +23,7 @@ class Solver:
                     changes_in_tube += 1
             
             total_changes += changes_in_tube
-        
+            changes_in_tube = 0
         return total_changes
             
     def heuristic_2(self,state):
@@ -45,14 +49,23 @@ class Solver:
         return self.heuristic_1(board) + self.heuristic_2(board)
     
 
-    def a_star_search(self,initial_board,heuristic):
-        root = TreeNode(initial_board)
+    def a_star_search(self,heuristic):
+
+        self.expanded_nodes = 0
+        self.generated_nodes = 0
+        self.time_execution = 0
+
+        root = TreeNode(self.initialBoard)
         queue = [(root,0 + heuristic(root.state))]
 
         visited_states = set()
-  
+
+        time1 = time.perf_counter()
+
         while queue:
             current_board, _ = queue.pop(0)
+            
+            self.expanded_nodes += 1
 
             if current_board.state in visited_states:
                 continue
@@ -61,6 +74,10 @@ class Solver:
             visited_states.add(current_board.state)
             
             if current_board.state.is_won():
+
+                time2 = time.perf_counter()
+                self.time_execution = time2 - time1
+
                 return current_board
 
 
@@ -69,6 +86,8 @@ class Solver:
 
             for state in possible_boards:
                 child_board = TreeNode(state)
+
+                self.generated_nodes += 1
 
                 child_board.parent = current_board
                 
@@ -80,16 +99,28 @@ class Solver:
             
             queue = sorted(queue, key=lambda x: x[1])
 
+        time2 = time.perf_counter()
+        self.time_execution = time2 - time1
+
         return None
 
-    def weigth_star_search(self,initial_board,heuristic, weight):
-        root = TreeNode(initial_board)
+    def weigth_star_search(self,heuristic, weight):
+
+        self.expanded_nodes = 0
+        self.generated_nodes = 0
+        self.time_execution = 0
+
+        root = TreeNode(self.initialBoard)
         queue = [(root,0 + weight * heuristic(root.state))]
 
         visited_states = set()
-  
+
+        time1 = time.perf_counter()
+
         while queue:
             current_board, _ = queue.pop(0)
+
+            self.expanded_nodes += 1
 
             if current_board.state in visited_states:
                 continue
@@ -98,6 +129,10 @@ class Solver:
             visited_states.add(current_board.state)
             
             if current_board.state.is_won():
+
+                time2 = time.perf_counter()
+                self.time_execution = time2 - time1
+
                 return current_board
 
 
@@ -106,6 +141,8 @@ class Solver:
 
             for state in possible_boards:
                 child_board = TreeNode(state)
+
+                self.generated_nodes += 1
 
                 child_board.parent = current_board
                 
@@ -117,16 +154,28 @@ class Solver:
             
             queue = sorted(queue, key=lambda x: x[1])
 
+        time2 = time.perf_counter()
+        self.time_execution = time2 - time1
+
         return None
 
-    def greedy_search(self, initial_board, heuristic):
-        root = TreeNode(initial_board)
+    def greedy_search(self, heuristic):
+
+        self.expanded_nodes = 0
+        self.generated_nodes = 0
+        self.time_execution = 0
+
+        root = TreeNode(self.initialBoard)
         queue = [(root, heuristic(root.state))]
 
         visited_states = set()
   
+        time1 = time.perf_counter()
+
         while queue:
             current_board, _ = queue.pop(0)
+            
+            self.expanded_nodes += 1
 
             if current_board.state in visited_states:
                 continue
@@ -135,6 +184,10 @@ class Solver:
             visited_states.add(current_board.state)
             
             if current_board.state.is_won():
+                       
+                time2 = time.perf_counter()
+                self.time_execution = time2 - time1
+
                 return current_board
 
 
@@ -143,6 +196,7 @@ class Solver:
 
             for state in possible_boards:
                 child_board = TreeNode(state)
+                self.generated_nodes += 1
 
                 child_board.parent = current_board
                 
@@ -153,6 +207,9 @@ class Solver:
                 queue.append([child_board,heuristic_value])
             
             queue = sorted(queue, key=lambda x: x[1])
+
+        time2 = time.perf_counter()
+        self.time_execution = time2 - time1
 
         return None
 

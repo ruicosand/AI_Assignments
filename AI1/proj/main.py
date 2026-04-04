@@ -48,6 +48,13 @@ class App:
             self.menu.draw(self._display_surf)
         if self.state == "game":
             self.game.draw(self._display_surf)
+        
+        if self.state == "solver_menu":
+            self
+        if self.state == "solving":
+
+        if self.state == "solver_stats":
+
         if self.state == "win":
             print("Won")
         pygame.display.update()
