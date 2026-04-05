@@ -2,7 +2,8 @@ import pygame
 from pygame.locals import *
 from Menu.menu import Menu
 from game import Game
-
+from solverGame import SolverGame
+from Menu.solverMenu import SolverMenu
 
 class App:
     def __init__(self):
@@ -11,6 +12,8 @@ class App:
         self.state = "menu"
         self.size = self.width, self.height = 600, 800
         self.clock = None
+        self.game = None
+        self.solverMenu = None
         self.pending_win = 0
 
     def on_init(self):
@@ -27,13 +30,42 @@ class App:
         
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.state == "menu":
-                if self.menu.handle_click(event.pos):
+                clicked = self.menu.handle_click(event.pos)
+                if clicked == 1:
                     self.state = "game"
                     self.game = Game(self.width, self.height)
-            if self.state == "game":
+                elif clicked == 2:
+                    self.state = "solverMenu"
+                    self.solverMenu = SolverMenu(self.width, self.height)
+
+            elif self.state == "game":
                 if self.game.handle_click(event.pos):
                     self.pending_win = 2 
+            
+            elif self.state == "solverMenu":
+                clicked = self.solverMenu.handle_click(event.pos)
+                if clicked == 1:
+                    self.solver = SolverGame(self.width, self.height)
+                    self.solver.handle_board("Star", self.solver.solver.heuristic_1)
+                    self.state = "solving"
 
+                elif clicked == 2:
+                    self.solver = SolverGame(self.width, self.height)
+                    self.solver.handle_board("Greedy", self.solver.solver.heuristic_1)
+                    self.state = "solving"
+
+                elif clicked == 3:
+                    self.solver = SolverGame(self.width, self.height)
+                    self.solver.handle_board("Weight",  self.solver.solver.heuristic_1, 2)
+                    self.state = "solving"
+            
+            elif self.state == "solver_stats":
+                clicked = self.solverStats.handle_click(event.pos)
+                if clicked == 1:  # voltar
+                    self.current_state = 0  # reinicia animação
+                    self.state = "solving"
+                elif clicked == 2:  # menu
+                    self.state = "menu"
 
     def on_loop(self):
         if self.state == "menu":
@@ -43,18 +75,19 @@ class App:
             if self.pending_win == 0:
                 self.state = "win"
 
+        if self.state == "solving":
+            if self.solver.update_state():
+                self.state = "solver_stats"
+
     def on_render(self):
         if self.state == "menu":
             self.menu.draw(self._display_surf)
         if self.state == "game":
             self.game.draw(self._display_surf)
-        
-        if self.state == "solver_menu":
-            self
+        if self.state == "solverMenu":
+            self.solverMenu.draw(self._display_surf)
         if self.state == "solving":
-
-        if self.state == "solver_stats":
-
+            self.solver.draw(self._display_surf)
         if self.state == "win":
             print("Won")
         pygame.display.update()

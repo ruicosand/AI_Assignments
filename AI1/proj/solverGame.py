@@ -16,7 +16,7 @@ def calculate_space(width,size):
 class SolverGame:
     def __init__(self, width, height):
         self.controller = GameController()
-        self.solver = Solver(self.controller.board)
+        self.solver = Solver(WaterSort(self.controller.board))
         self.width = width
         self.height = height
         self.current_state = 0
