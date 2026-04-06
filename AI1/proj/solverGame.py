@@ -77,7 +77,16 @@ class SolverGame:
         
         winnig_state = None
 
-        if (algorithm == "Star"):
+        if algorithm == "BFS":
+            winnig_state = self.solver.bfs_search()
+
+        elif algorithm == "DFS":
+            winnig_state = self.solver.dfs_search()
+
+        elif algorithm == "UCS":
+            winnig_state = self.solver.uniform_cost_search()
+            
+        elif (algorithm == "Star"):
             winnig_state = self.solver.a_star_search(heuristic)
 
         elif (algorithm == "Greedy"):

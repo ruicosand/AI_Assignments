@@ -4,6 +4,14 @@ from Menu.menu import Menu
 from game import Game
 from solverGame import SolverGame
 from Menu.solverMenu import SolverMenu
+from Menu.solverStats import SolverStats
+
+HEURISTIC_NAMES = {
+    2: "h1 => Color changes",
+    3: "h2 => Mixed tubes",
+    4: "h3 => h1 + h2",
+    None: "None",
+}
 
 class App:
     def __init__(self):
@@ -14,7 +22,10 @@ class App:
         self.clock = None
         self.game = None
         self.solverMenu = None
+        self.solverStats = None
+        self.solver = None
         self.pending_win = 0
+        self.selected_heuristic_code = None
 
     def on_init(self):
         pygame.init()
@@ -23,6 +34,19 @@ class App:
         self.clock = pygame.time.Clock()
         self._running = True
         return True
+    
+    def _launch_solver(self, algorithm, heuristic_code):
+        self.solver = SolverGame(self.width, self.height)
+        self.selected_heuristic_code = heuristic_code
+
+        heuristic_map = {
+            2: self.solver.solver.heuristic_1,
+            3: self.solver.solver.heuristic_2,
+            4: self.solver.solver.heuristic_3,
+        }
+        heuristic = heuristic_map.get(heuristic_code, None)
+        self.solver.handle_board(algorithm, heuristic)
+        self.state = "solving"
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
@@ -44,25 +68,21 @@ class App:
             
             elif self.state == "solverMenu":
                 clicked = self.solverMenu.handle_click(event.pos)
+                algorithm = self.solverMenu.selected_algorithm
+
                 if clicked == 1:
-                    self.solver = SolverGame(self.width, self.height)
-                    self.solver.handle_board("Star", self.solver.solver.heuristic_1)
-                    self.state = "solving"
+                    # BFS / DFS / UCS 
+                    self._launch_solver(algorithm, None)
 
-                elif clicked == 2:
-                    self.solver = SolverGame(self.width, self.height)
-                    self.solver.handle_board("Greedy", self.solver.solver.heuristic_1)
-                    self.state = "solving"
+                elif clicked in (2, 3, 4):
+                    # A* / Greedy / Weight 
+                    self._launch_solver(algorithm, clicked)
 
-                elif clicked == 3:
-                    self.solver = SolverGame(self.width, self.height)
-                    self.solver.handle_board("Weight",  self.solver.solver.heuristic_1, 2)
-                    self.state = "solving"
-            
             elif self.state == "solver_stats":
                 clicked = self.solverStats.handle_click(event.pos)
-                if clicked == 1:  # voltar
-                    self.current_state = 0  # reinicia animação
+                if clicked == 1:  # replay
+                    self.solver.current_state = 0
+                    self.solver.timer = 0
                     self.state = "solving"
                 elif clicked == 2:  # menu
                     self.state = "menu"
@@ -77,18 +97,30 @@ class App:
 
         if self.state == "solving":
             if self.solver.update_state():
+                num_moves = len(self.solver.board_solutions) - 1
+                algorithm = self.solverMenu.selected_algorithm
+                h_name = HEURISTIC_NAMES.get(self.selected_heuristic_code, "None")
+                self.solverStats = SolverStats(
+                    self.width, self.height,
+                    self.solver.solver,
+                    num_moves,
+                    algorithm,
+                    h_name
+                )
                 self.state = "solver_stats"
 
     def on_render(self):
         if self.state == "menu":
             self.menu.draw(self._display_surf)
-        if self.state == "game":
+        elif self.state == "game":
             self.game.draw(self._display_surf)
-        if self.state == "solverMenu":
+        elif self.state == "solverMenu":
             self.solverMenu.draw(self._display_surf)
-        if self.state == "solving":
+        elif self.state == "solving":
             self.solver.draw(self._display_surf)
-        if self.state == "win":
+        elif self.state == "solver_stats":
+            self.solverStats.draw(self._display_surf)
+        elif self.state == "win":
             print("Won")
         pygame.display.update()
 

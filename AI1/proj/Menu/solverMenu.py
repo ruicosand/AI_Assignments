@@ -1,39 +1,60 @@
-import pygame 
-
+import pygame
 from Menu.background import Background
 from Menu.menu import Button
 
+NEEDS_HEURISTIC = {"Star", "Greedy", "Weight"}
 
-class SolverMenu: 
-    def __init__(self, screen_width, scree_height):
-        self.background = Background(screen_width, scree_height)
-        self.button1 = Button(40,40,100,40,(0,255,0))
-        self.button2 = Button(40,40 + 40 + 20,100,40,(0,255,0))
-        self.button3 = Button(40,40 + 80 + 40,100,40,(0,255,0))
+class SolverMenu:
+    def __init__(self, screen_width, screen_height):
+        self.background = Background(screen_width, screen_height)
+        self.screen = "algorithm"
+        self.selected_algorithm = None
 
+        self.alg_buttons = [
+            ("BFS",    Button(40, 40,  180, 40, (0, 255, 0))),
+            ("DFS",    Button(40, 100, 180, 40, (0, 255, 0))),
+            ("UCS",    Button(40, 160, 180, 40, (0, 255, 0))),
+            ("Star",   Button(40, 220, 180, 40, (0, 255, 0))),
+            ("Greedy", Button(40, 280, 180, 40, (0, 255, 0))),
+            ("Weight", Button(40, 340, 180, 40, (0, 255, 0))),
+        ]
+
+        self.h_buttons = [
+            Button(40, 40,  220, 40, (0, 255, 0)),  # h1
+            Button(40, 100, 220, 40, (0, 255, 0)),  # h2
+            Button(40, 160, 220, 40, (0, 255, 0)),  # h3
+        ]
 
     def update(self):
         self.background.update()
 
     def draw(self, surface):
         self.background.draw(surface)
-        self.button1.draw(surface)
-        self.button2.draw(surface)
-        self.button3.draw(surface)
 
-    def handle_click(self,mouse_pos):
-            rect1 = pygame.Rect(self.button1.x, self.button1.y, self.button1.width, self.button1.height)
-            rect2 = pygame.Rect(self.button2.x, self.button2.y, self.button2.width, self.button2.height)
-            rect3 = pygame.Rect(self.button3.x, self.button3.y, self.button3.width, self.button3.height)
+        if self.screen == "algorithm":
+            for _, btn in self.alg_buttons:
+                btn.draw(surface)
 
-            if rect1.collidepoint(mouse_pos):
-                return 1
-            
-            elif rect2.collidepoint(mouse_pos):
-                return 2 
+        elif self.screen == "heuristic":
+            for btn in self.h_buttons:
+                btn.draw(surface)
 
-            elif rect3.collidepoint(mouse_pos): 
-                return 3
+    def handle_click(self, mouse_pos):
+        if self.screen == "algorithm":
+            for name, btn in self.alg_buttons:
+                rect = pygame.Rect(btn.x, btn.y, btn.width, btn.height)
+                if rect.collidepoint(mouse_pos):
+                    self.selected_algorithm = name
+                    if name not in NEEDS_HEURISTIC:
+                        return 1 
+                    else:
+                        self.screen = "heuristic"
+                        return 0 
 
-            else: return 0
+        elif self.screen == "heuristic":
+            for i, btn in enumerate(self.h_buttons):
+                rect = pygame.Rect(btn.x, btn.y, btn.width, btn.height)
+                if rect.collidepoint(mouse_pos):
+                    return i + 2  
 
+        return 0

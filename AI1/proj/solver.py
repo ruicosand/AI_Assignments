@@ -1,5 +1,6 @@
 from waterSort import TreeNode
 from waterSort import WaterSort
+from collections import deque
 import time
 
 
@@ -211,6 +212,118 @@ class Solver:
         time2 = time.perf_counter()
         self.time_execution = time2 - time1
 
+        return None
+    
+    def bfs_search(self):
+        self.expanded_nodes = 0
+        self.generated_nodes = 0
+        self.time_execution = 0
+
+        root = TreeNode(self.initialBoard)
+        queue = deque([root])
+        visited_states = set()
+
+        time1 = time.perf_counter()
+
+        while queue:
+            current_board = queue.popleft()
+
+            if current_board.state in visited_states:
+                continue
+
+            visited_states.add(current_board.state)
+            self.expanded_nodes += 1
+
+            if current_board.state.is_won():
+                self.time_execution = time.perf_counter() - time1
+                return current_board
+
+            for state in current_board.state.generate_boards():
+                child_board = TreeNode(state)
+                self.generated_nodes += 1
+                child_board.parent = current_board
+                current_board.add_child(child_board)
+                queue.append(child_board)
+
+        self.time_execution = time.perf_counter() - time1
+        return None
+    
+
+    def dfs_search(self):
+        self.expanded_nodes = 0
+        self.generated_nodes = 0
+        self.time_execution = 0
+
+        root = TreeNode(self.initialBoard)
+        visited_states = set()
+
+        time1 = time.perf_counter()
+
+        result = self.dfs_recursive(root, visited_states)
+
+        self.time_execution = time.perf_counter() - time1
+
+        return result
+
+    def dfs_recursive(self, node, visited_states):
+        if node.state in visited_states:
+            return None
+
+        visited_states.add(node.state)
+        self.expanded_nodes += 1
+
+        if node.state.is_won():
+            return node
+
+        for state in node.state.generate_boards():
+            child_board = TreeNode(state)
+            self.generated_nodes += 1
+            child_board.parent = node
+            node.add_child(child_board)
+
+            result = self.dfs_recursive(child_board, visited_states)
+
+            if result is not None:
+                return result
+
+        return None
+
+
+    def uniform_cost_search(self):
+        self.expanded_nodes = 0
+        self.generated_nodes = 0
+        self.time_execution = 0
+
+        root = TreeNode(self.initialBoard)
+        queue = [(root, 0)]
+        visited_states = set()
+
+        time1 = time.perf_counter()
+
+        while queue:
+            current_board, current_cost = queue.pop(0)
+
+            if current_board.state in visited_states:
+                continue
+
+            visited_states.add(current_board.state)
+            self.expanded_nodes += 1
+
+            if current_board.state.is_won():
+                self.time_execution = time.perf_counter() - time1
+                return current_board
+
+            for state in current_board.state.generate_boards():
+                child_board = TreeNode(state)
+                self.generated_nodes += 1
+                child_board.parent = current_board
+                current_board.add_child(child_board, 1, 0)
+                queue.append((child_board, current_cost + 1))
+
+            queue = sorted(queue, key=lambda x: x[1])
+
+        self.time_execution = time.perf_counter() - time1
+        
         return None
 
     
