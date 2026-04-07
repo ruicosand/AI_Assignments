@@ -15,6 +15,7 @@ HEURISTIC_NAMES = {
 
 class App:
     def __init__(self):
+        self.board_loaded = False
         self._running = True
         self._display_surf = None
         self.state = "menu"
@@ -36,7 +37,11 @@ class App:
         return True
     
     def _launch_solver(self, algorithm, heuristic_code):
-        self.solver = SolverGame(self.width, self.height)
+        if not self.board_loaded:
+            self.solver = SolverGame(self.width, self.height)
+        
+        self.board_loaded = False
+
         self.selected_heuristic_code = heuristic_code
 
         heuristic_map = {
@@ -69,13 +74,17 @@ class App:
             elif self.state == "solverMenu":
                 clicked = self.solverMenu.handle_click(event.pos)
                 algorithm = self.solverMenu.selected_algorithm
+                if clicked == -1:
+                    self.solver = SolverGame(self.width, self.height)
+                    self.solver.build_board()
+                    self.board_loaded = True    
 
                 if clicked == 1:
-                    # BFS / DFS / UCS 
+                    
                     self._launch_solver(algorithm, None)
 
                 elif clicked in (2, 3, 4):
-                    # A* / Greedy / Weight 
+                   
                     self._launch_solver(algorithm, clicked)
 
             elif self.state == "solver_stats":

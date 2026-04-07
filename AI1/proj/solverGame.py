@@ -1,5 +1,6 @@
 
 import pygame 
+import ast
 from game_logic import GameController
 from waterSort import WaterSort
 from Menu.background import Background
@@ -16,7 +17,8 @@ def calculate_space(width,size):
 class SolverGame:
     def __init__(self, width, height):
         self.controller = GameController()
-        self.solver = Solver(WaterSort(self.controller.board))
+        self.solver = Solver(WaterSort(self.controller.board)) 
+        self.board_loaded = False
         self.width = width
         self.height = height
         self.current_state = 0
@@ -73,6 +75,16 @@ class SolverGame:
                 pygame.draw.rect(surface,color,(pos[0],y + y_offset,60,30))
 
     
+    def build_board(self):
+        fileBoard = None
+        with open('input_files/experimental_board_4_by_4') as file_board:
+            fileBoard = ast.literal_eval(file_board.read())
+        
+        self.solver = Solver(WaterSort(fileBoard)) 
+            
+
+
+
     def handle_board(self,algorithm, heuristic, weight=1):
         
         winnig_state = None
@@ -95,7 +107,10 @@ class SolverGame:
         else:
             winnig_state = self.solver.weigth_star_search(heuristic, weight)
         
+        if winnig_state is None:
+            print("Sem solução!")
 
+            return
         board_states = []
 
         while winnig_state.parent is not None:

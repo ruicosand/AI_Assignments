@@ -10,6 +10,8 @@ class SolverMenu:
         self.screen = "algorithm"
         self.selected_algorithm = None
 
+        self.file_button = Button(40, 550, 180, 40, (255,0,255))
+
         self.alg_buttons = [
             ("BFS",    Button(40, 40,  180, 40, (0, 255, 0))),
             ("DFS",    Button(40, 100, 180, 40, (0, 255, 0))),
@@ -32,6 +34,8 @@ class SolverMenu:
         self.background.draw(surface)
 
         if self.screen == "algorithm":
+            self.file_button.draw(surface)
+
             for _, btn in self.alg_buttons:
                 btn.draw(surface)
 
@@ -41,6 +45,11 @@ class SolverMenu:
 
     def handle_click(self, mouse_pos):
         if self.screen == "algorithm":
+            rectFile = pygame.Rect(self.file_button.x, self.file_button.y, self.file_button.width, self.file_button.height) 
+
+            if rectFile.collidepoint(mouse_pos):
+                return -1
+
             for name, btn in self.alg_buttons:
                 rect = pygame.Rect(btn.x, btn.y, btn.width, btn.height)
                 if rect.collidepoint(mouse_pos):

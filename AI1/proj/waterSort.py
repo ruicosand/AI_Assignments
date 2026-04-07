@@ -101,9 +101,13 @@ class WaterSort:
         for i in range(len(self.board)):
             for j in range(len(self.board)):
                 if i != j:
-                    if self.can_move(i, j):
-                        new_board = self.move_color(i,j)
-                        child_boards.append(new_board)
+                    state_temp = self
+                    color_tube_move = self.get_top(self.board[i])
+                    while(state_temp.get_top(state_temp.board[i]) == color_tube_move and state_temp.can_move(i, j)): 
+                        state_temp = state_temp.move_color(i, j)
+                    
+                    if state_temp != self:
+                        child_boards.append(state_temp)
 
         return child_boards
 
