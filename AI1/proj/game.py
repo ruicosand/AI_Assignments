@@ -5,6 +5,10 @@ from Menu.background import Background
 from Menu.menu import Button
 from solver import Solver
 from copy import deepcopy
+from objects.shelf import Shelf
+from objects.x_button import XButton
+
+
 
 class Game:
     def __init__(self, width, height, num_colors, tube_size):
@@ -32,6 +36,7 @@ class Game:
     
 
         self.background = Background(width,height)
+        self.x = XButton(width,height)
         self.tubes_positions = []
         self.setup_tubes()
 
@@ -63,6 +68,7 @@ class Game:
         if self.isWon is False:
             self.resetButton.draw(surface)
             self.hintButton.draw(surface)
+            self.x.draw(surface)
 
             reset_text = self.font.render("Reset", True, (0, 0, 0))
             hint_text = self.font.render(f"Hint ({self.num_hints})", True, (0, 0, 0))
@@ -157,15 +163,16 @@ class Game:
                 self.controller.board = self.initial_board
                 return False
 
+            if self.x.rect.collidepoint(pos):
+                return "exit"
+
             if tube_selected is None:
                 return False
         
             self.controller.handle_click(tube_selected)
             waterSort = WaterSort(self.controller.board)
             return waterSort.is_won()
-
-    
-
-            
-
-
+        
+           
+        
+       

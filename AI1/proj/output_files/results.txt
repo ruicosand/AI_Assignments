@@ -352,3 +352,42 @@ Expanded Nodes: 0.2915
 
 
 
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 12
+Expanded Nodes: 5516
+Generated Nodes: 23702
+Expanded Nodes: 0.7064
+
+
+
+
+
+========== Stats ==========
+Algorithm: DFS
+Heuristic: None
+
+Moves: 23
+Expanded Nodes: 24
+Generated Nodes: 32
+Expanded Nodes: 0.0038
+
+
+
+
+
+========== Stats ==========
+Algorithm: UCS
+Heuristic: None
+
+Moves: 9
+Expanded Nodes: 2238
+Generated Nodes: 10466
+Expanded Nodes: 0.7243
+
+
+
+
+

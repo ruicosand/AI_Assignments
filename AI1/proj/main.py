@@ -64,16 +64,33 @@ class App:
         
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.state == "menu":
-                clicked = self.menu.handle_click(event.pos)
-                if clicked == 1:
+                action = self.menu.handle_click(event.pos)
+
+                if action == "exit":
+                   self._running = False 
+
+                elif action == "play":
                     self.state = "level"
                     self.selectionMode = 1
                     self.levelMenu = levelMenu(self.width,self.height)
 
-                elif clicked == 2:
+                elif action == "model":
                     self.state = "level"
-                    self.levelMenu = levelMenu(self.width,self.height)
                     self.selectionMode = 2
+                    self.levelMenu = levelMenu(self.width,self.height) 
+                
+            elif self.state == "game":
+                value = self.game.handle_click(event.pos)
+                
+                if value == "exit":
+                   self.state = "menu"
+
+                if value == "next":
+                    self.game = Game(self.width,self.height, self.num_colors, self.tube_size)
+                    
+                if value == True:
+                    self.pending_win = 2
+
             elif self.state == "level":
                     level = self.levelMenu.handle_click(event.pos)
                     if level == "easy":
@@ -107,17 +124,7 @@ class App:
                             
                         else: 
                             self.state = "solverMenu"
-                            self.solverMenu = SolverMenu(self.width,self.height)
-
-
-            elif self.state == "game":
-                value = self.game.handle_click(event.pos)
-
-                if value == "next":
-                    self.game = Game(self.width,self.height, self.num_colors, self.tube_size)
-                    
-                if value == True:
-                    self.pending_win = 2 
+                            self.solverMenu = SolverMenu(self.width,self.height) 
                 
             elif self.state == "solverMenu":
                 clicked = self.solverMenu.handle_click(event.pos)
