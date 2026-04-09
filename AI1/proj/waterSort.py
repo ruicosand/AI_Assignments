@@ -48,8 +48,7 @@ class WaterSort:
         
         tube1 = self.board[tube_to_move]
         tube2 = self.board[tube_to_receive]
-        color1 = self.get_top(tube1)
-        
+        color1 = self.get_top(tube1)   
         if color1 != None:
             color2 = self.get_top(tube2)
             if color2 == None:

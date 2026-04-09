@@ -17,6 +17,26 @@ class SolverStats:
         self.btn_replay = Button(screen_width // 2 - 130, screen_height - 120, 110, 40, (0, 200, 100))
         self.btn_menu   = Button(screen_width // 2 + 20,  screen_height - 120, 110, 40, (0, 180, 230))
 
+
+
+        self.save_results()
+
+
+    def save_results(self):
+        with open("output_files/results.txt", "a") as f:
+            f.write(f"="*10 + " Stats " + "="*10 + "\n")
+
+            f.write(f"Algorithm: {self.algorithm}\n")
+            f.write(f"Heuristic: {self.heuristic_name}\n\n")
+
+            f.write(f"Moves: {self.num_moves}\n")
+            f.write(f"Expanded Nodes: {self.solver.expanded_nodes}\n")
+            f.write(f"Generated Nodes: {self.solver.generated_nodes}\n")
+            f.write(f"Expanded Nodes: {self.solver.time_execution:.4f}\n")
+            f.write("\n"*5)
+
+
+
     def draw(self, surface):
         self.background.draw(surface)
 

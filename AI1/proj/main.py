@@ -5,6 +5,7 @@ from game import Game
 from solverGame import SolverGame
 from Menu.solverMenu import SolverMenu
 from Menu.solverStats import SolverStats
+from Menu.levelMenu import levelMenu
 
 HEURISTIC_NAMES = {
     2: "h1 => Color changes",
@@ -19,9 +20,13 @@ class App:
         self._running = True
         self._display_surf = None
         self.state = "menu"
+        self.selectionMode = 0
+        self.num_colors = None
+        self.tube_size = 4
         self.size = self.width, self.height = 600, 800
         self.clock = None
         self.game = None
+        self.levelMenu = None
         self.solverMenu = None
         self.solverStats = None
         self.solver = None
@@ -37,8 +42,8 @@ class App:
         return True
     
     def _launch_solver(self, algorithm, heuristic_code):
-        if not self.board_loaded:
-            self.solver = SolverGame(self.width, self.height)
+        if not self.board_loaded or self.solver is None:
+            self.solver = SolverGame(self.width, self.height, self.num_colors, self.tube_size)
         
         self.board_loaded = False
 
@@ -61,25 +66,70 @@ class App:
             if self.state == "menu":
                 clicked = self.menu.handle_click(event.pos)
                 if clicked == 1:
-                    self.state = "game"
-                    self.game = Game(self.width, self.height)
+                    self.state = "level"
+                    self.selectionMode = 1
+                    self.levelMenu = levelMenu(self.width,self.height)
+
                 elif clicked == 2:
-                    self.state = "solverMenu"
-                    self.solverMenu = SolverMenu(self.width, self.height)
+                    self.state = "level"
+                    self.levelMenu = levelMenu(self.width,self.height)
+                    self.selectionMode = 2
+            elif self.state == "level":
+                    level = self.levelMenu.handle_click(event.pos)
+                    if level == "easy":
+                        self.num_colors = 4
+                        self.tube_size = 4
+                        if self.selectionMode == 1:
+                            self.state = "game"
+                            self.game = Game(self.width,self.height, self.num_colors, self.tube_size)
+
+                        else: 
+                            self.state = "solverMenu"
+                            self.solverMenu = SolverMenu(self.width,self.height)
+
+                    if level == "medium":
+                        self.num_colors = 7
+                        self.tube_size = 4
+                        if self.selectionMode == 1:
+                            self.state = "game"
+                            self.game = Game(self.width,self.height, self.num_colors, self.tube_size)
+                            
+                        else: 
+                            self.state = "solverMenu"
+                            self.solverMenu = SolverMenu(self.width,self.height)
+
+                    if level == "hard":
+                        self.num_colors = 10
+                        self.tube_size = 4
+                        if self.selectionMode == 1:
+                            self.state = "game"
+                            self.game = Game(self.width,self.height, self.num_colors, self.tube_size)
+                            
+                        else: 
+                            self.state = "solverMenu"
+                            self.solverMenu = SolverMenu(self.width,self.height)
+
 
             elif self.state == "game":
-                if self.game.handle_click(event.pos):
+                value = self.game.handle_click(event.pos)
+
+                if value == "next":
+                    self.game = Game(self.width,self.height, self.num_colors, self.tube_size)
+                    
+                if value == True:
                     self.pending_win = 2 
-            
+                
             elif self.state == "solverMenu":
                 clicked = self.solverMenu.handle_click(event.pos)
                 algorithm = self.solverMenu.selected_algorithm
                 if clicked == -1:
-                    self.solver = SolverGame(self.width, self.height)
+                    self.solver = SolverGame(self.width, self.height, self.num_colors, self.tube_size)
                     self.solver.build_board()
                     self.board_loaded = True    
-
-                if clicked == 1:
+                    self.num_colors = self.solver.num_colors
+                    return 
+                
+                elif clicked == 1:
                     
                     self._launch_solver(algorithm, None)
 
@@ -89,20 +139,23 @@ class App:
 
             elif self.state == "solver_stats":
                 clicked = self.solverStats.handle_click(event.pos)
-                if clicked == 1:  # replay
+                if clicked == 1:  
                     self.solver.current_state = 0
                     self.solver.timer = 0
                     self.state = "solving"
-                elif clicked == 2:  # menu
+                elif clicked == 2:  
                     self.state = "menu"
 
     def on_loop(self):
         if self.state == "menu":
             self.menu.update()
+        
+        if self.state == "level":
+            self.levelMenu.update()
         if self.state == "game" and self.pending_win > 0:
             self.pending_win -= 1
             if self.pending_win == 0:
-                self.state = "win"
+                self.game.isWon = True
 
         if self.state == "solving":
             if self.solver.update_state():
@@ -121,6 +174,8 @@ class App:
     def on_render(self):
         if self.state == "menu":
             self.menu.draw(self._display_surf)
+        elif self.state == "level":
+            self.levelMenu.draw(self._display_surf)
         elif self.state == "game":
             self.game.draw(self._display_surf)
         elif self.state == "solverMenu":
@@ -129,8 +184,6 @@ class App:
             self.solver.draw(self._display_surf)
         elif self.state == "solver_stats":
             self.solverStats.draw(self._display_surf)
-        elif self.state == "win":
-            print("Won")
         pygame.display.update()
 
     def on_cleanup(self):

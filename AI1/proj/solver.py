@@ -15,35 +15,26 @@ class Solver:
 
 
     def heuristic_1(self, state):
-        changes_in_tube = 0
+        empty = (255, 255, 255)
         total_changes = 0
 
         for tube in state.board:
-            for i in range(0,len(tube)-1,1):
-                if tube[i] != tube[i + 1]:
-                    changes_in_tube += 1
-            
-            total_changes += changes_in_tube
-            changes_in_tube = 0
+            real_colors = [c for c in tube if c != empty]  
+            for i in range(len(real_colors) - 1):
+                if real_colors[i] != real_colors[i + 1]:
+                    total_changes += 1
+
         return total_changes
             
-    def heuristic_2(self,state):
+    def heuristic_2(self, state):
         count_tubes = 0
+        empty = (255, 255, 255)
 
         for tube in state.board:
-            color_verify = state.get_top(tube)
-
-            if color_verify is None:
-                continue
-
-            if state.get_first_empty(tube) is not None:
+            colors = set(c for c in tube if c != empty)  
+            if len(colors) > 1:
                 count_tubes += 1
-                continue
 
-            for color in tube:
-                if color != color_verify:
-                    count_tubes += 1
-    
         return count_tubes
 
     def heuristic_3(self, board):

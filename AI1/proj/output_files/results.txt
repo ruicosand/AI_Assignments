@@ -1,0 +1,354 @@
+
+
+
+========== Stats ==========
+Algorithm: Greedy
+Heuristic: h1 => Color changes
+
+Moves: 13
+Expanded Nodes: 16
+Generated Nodes: 99
+Expanded Nodes: 0.0084
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 10
+Expanded Nodes: 3772
+Generated Nodes: 18157
+Expanded Nodes: 1.1783
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h1 => Color changes
+
+Moves: 12
+Expanded Nodes: 280
+Generated Nodes: 690
+Expanded Nodes: 0.0577
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h1 => Color changes
+
+Moves: 12
+Expanded Nodes: 720
+Generated Nodes: 1561
+Expanded Nodes: 0.2393
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h3 => h1 + h2
+
+Moves: 24
+Expanded Nodes: 313
+Generated Nodes: 1404
+Expanded Nodes: 0.1985
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h3 => h1 + h2
+
+Moves: 33
+Expanded Nodes: 184
+Generated Nodes: 1744
+Expanded Nodes: 0.2707
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 13
+Expanded Nodes: 7618
+Generated Nodes: 33322
+Expanded Nodes: 2.2998
+
+
+
+
+
+========== Stats ==========
+Algorithm: Weight
+Heuristic: h1 => Color changes
+
+Moves: 13
+Expanded Nodes: 107
+Generated Nodes: 575
+Expanded Nodes: 0.0393
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h1 => Color changes
+
+Moves: 10
+Expanded Nodes: 376
+Generated Nodes: 987
+Expanded Nodes: 0.0830
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h2 => Mixed tubes
+
+Moves: 21
+Expanded Nodes: 14994
+Generated Nodes: 30997
+Expanded Nodes: 15.2774
+
+
+
+
+
+========== Stats ==========
+Algorithm: Greedy
+Heuristic: h1 => Color changes
+
+Moves: 13
+Expanded Nodes: 16
+Generated Nodes: 99
+Expanded Nodes: 0.0067
+
+
+
+
+
+========== Stats ==========
+Algorithm: Weight
+Heuristic: h3 => h1 + h2
+
+Moves: 97
+Expanded Nodes: 125
+Generated Nodes: 793
+Expanded Nodes: 0.2434
+
+
+
+
+
+========== Stats ==========
+Algorithm: Greedy
+Heuristic: h3 => h1 + h2
+
+Moves: 93
+Expanded Nodes: 96
+Generated Nodes: 586
+Expanded Nodes: 0.1969
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h3 => h1 + h2
+
+Moves: 22
+Expanded Nodes: 25
+Generated Nodes: 234
+Expanded Nodes: 0.0268
+
+
+
+
+
+========== Stats ==========
+Algorithm: Weight
+Heuristic: h3 => h1 + h2
+
+Moves: 33
+Expanded Nodes: 219
+Generated Nodes: 1691
+Expanded Nodes: 0.2948
+
+
+
+
+
+========== Stats ==========
+Algorithm: Weight
+Heuristic: h3 => h1 + h2
+
+Moves: 13
+Expanded Nodes: 16
+Generated Nodes: 99
+Expanded Nodes: 0.0076
+
+
+
+
+
+========== Stats ==========
+Algorithm: Weight
+Heuristic: h3 => h1 + h2
+
+Moves: 13
+Expanded Nodes: 16
+Generated Nodes: 99
+Expanded Nodes: 0.0080
+
+
+
+
+
+========== Stats ==========
+Algorithm: Weight
+Heuristic: h3 => h1 + h2
+
+Moves: 36
+Expanded Nodes: 253
+Generated Nodes: 1944
+Expanded Nodes: 0.3168
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h1 => Color changes
+
+Moves: 10
+Expanded Nodes: 106
+Generated Nodes: 368
+Expanded Nodes: 0.0259
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h2 => Mixed tubes
+
+Moves: 10
+Expanded Nodes: 245
+Generated Nodes: 684
+Expanded Nodes: 0.0614
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h3 => h1 + h2
+
+Moves: 13
+Expanded Nodes: 105
+Generated Nodes: 361
+Expanded Nodes: 0.0314
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h1 => Color changes
+
+Moves: 19
+Expanded Nodes: 24210
+Generated Nodes: 58437
+Expanded Nodes: 42.0048
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 13
+Expanded Nodes: 7618
+Generated Nodes: 33322
+Expanded Nodes: 2.3254
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h3 => h1 + h2
+
+Moves: 11
+Expanded Nodes: 51
+Generated Nodes: 182
+Expanded Nodes: 0.0199
+
+
+
+
+
+========== Stats ==========
+Algorithm: Weight
+Heuristic: h3 => h1 + h2
+
+Moves: 32
+Expanded Nodes: 243
+Generated Nodes: 1101
+Expanded Nodes: 0.2568
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h3 => h1 + h2
+
+Moves: 31
+Expanded Nodes: 272
+Generated Nodes: 796
+Expanded Nodes: 0.2124
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h3 => h1 + h2
+
+Moves: 31
+Expanded Nodes: 364
+Generated Nodes: 994
+Expanded Nodes: 0.2915
+
+
+
+
+

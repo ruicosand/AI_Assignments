@@ -5,20 +5,16 @@ from game_logic import GameController
 from waterSort import WaterSort
 from Menu.background import Background
 from solver import Solver
-
-def calculate_space(width,size):
-        total_space = ( size / 3) * 60
-        remaining_space = width - total_space
-        
-        remaining_space = remaining_space / 4
-
-        return (total_space, remaining_space)
+import tkinter as tk
+from tkinter import filedialog
 
 class SolverGame:
-    def __init__(self, width, height):
-        self.controller = GameController()
+    def __init__(self, width, height, num_colors, tube_size):
+        self.controller = GameController(num_colors, tube_size)
         self.solver = Solver(WaterSort(self.controller.board)) 
         self.board_loaded = False
+        self.num_colors = num_colors
+        self.tube_size = tube_size
         self.width = width
         self.height = height
         self.current_state = 0
@@ -31,21 +27,19 @@ class SolverGame:
     
 
     def setup_tubes(self):
-        (total_space, remaining_space) = calculate_space(self.width,len(self.controller.board))
-        bottom_tube_pos_y = 260
-        bottom_tube_pos_x = remaining_space
+        total_tubes = self.num_colors + 2
 
-        for _ in range (1,4):
-            self.tubes_positions.append((bottom_tube_pos_x,bottom_tube_pos_y))
-            bottom_tube_pos_x += 60 + remaining_space
+        total_lines = total_tubes // 3
 
-        bottom_tube_pos_y = (self.height / 2) + 20
-        bottom_tube_pos_x = remaining_space
+        remaining_space = (self.width - 3 * 60) / 4
 
-        for _ in range (1,4):
-            self.tubes_positions.append((bottom_tube_pos_x,bottom_tube_pos_y))
-            bottom_tube_pos_x += 60 + remaining_space
-    
+        for line in range(total_lines):
+            pos_y = 100 + line * (120 + 40)  
+            pos_x = remaining_space
+
+            for col in range(3):
+                self.tubes_positions.append((pos_x, pos_y))
+                pos_x += 60 + remaining_space
 
     def update_state(self):
         self.timer += 1
@@ -60,6 +54,7 @@ class SolverGame:
     def draw(self,surface):
         board = self.board_solutions[self.current_state]
         self.background.draw(surface)
+        layer_height = 120 // self.tube_size
 
         for i, pos in enumerate(self.tubes_positions):
             if i == self.controller.selected_tube:
@@ -71,19 +66,35 @@ class SolverGame:
 
             pygame.draw.rect(surface, border_color, (pos[0], pos[1] + y_offset, 60, 120), width=2)
             for j, color in enumerate(board.board[i]):
-                y = pos[1] + 120 - (j + 1) * 30
-                pygame.draw.rect(surface,color,(pos[0],y + y_offset,60,30))
+                y = pos[1] + 120 - (j + 1) * layer_height  
+                pygame.draw.rect(surface, color, (pos[0], y + y_offset, 60, layer_height))
 
     
     def build_board(self):
-        fileBoard = None
-        with open('input_files/experimental_board_4_by_4') as file_board:
-            fileBoard = ast.literal_eval(file_board.read())
+        root = tk.Tk()
+        root.withdraw()
+
+        file_path = filedialog.askopenfilename(
+            title="Choose a board",
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+        )
+
+        if not file_path:
+            return 
         
-        self.solver = Solver(WaterSort(fileBoard)) 
-            
+        fileBoard = None
+        lines = None
+
+        with open(file_path) as f:
+            lines = f.read().split('\n', 1)  # separa na primeira linha
+            fileBoard = ast.literal_eval(lines[1].strip())
+        self.num_colors = int(lines[0].split('=')[1].strip())
 
 
+        self.tubes_positions = []  # limpa
+        self.setup_tubes()          # recalcula
+        self.solver = Solver(WaterSort(fileBoard))
+        
 
     def handle_board(self,algorithm, heuristic, weight=1):
         

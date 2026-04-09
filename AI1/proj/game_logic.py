@@ -3,30 +3,33 @@ from waterSort import WaterSort
 
 
 class GameController:
-    def __init__(self,num = 4):
+    def __init__(self,num_colors = 4,size_tubes = 4):
         self.selected_tube = None
         self.board = []
         self.count_moves = 0
-        self.generate_tubes(num,num)
+        self.generate_tubes(num_colors, size_tubes)
 
-    def generate_tubes(self, num_colors = 4, size_tubes=4):
-        colors = [(255,255,0), (255,0,0), (0,255,0), (0,255,255)]
+
+    def generate_tubes(self, num_colors=4, size_tubes=4):
+        colors_available = [
+            (255,255,0), (255,0,0), (0,255,0), (0,255,255), (153,0,153), 
+            (204,0,102), (102,102,0), (255, 128, 0), (153,0,0), (0,0,102)
+        ]
+
+        selected_colors = random.sample(colors_available, k=num_colors)
+
+        all_colors = selected_colors * size_tubes
         
-        tubes = [colors[0],colors[0], colors[0], colors[0], colors[1], colors[1], colors[1], colors[1], colors[2], colors[2], colors[2], colors[2], colors[3], colors[3], colors[3], colors[3]]
+        random.shuffle(all_colors)
 
-        random.shuffle(tubes)
+        self.board = []
+        for i in range(0, len(all_colors), size_tubes):
+            tube = all_colors[i : i + size_tubes]
+            self.board.append(tube)
 
-        self.board.append(tubes[0:4])
-        self.board.append(tubes[4:8])
-        self.board.append(tubes[8:12])
-        self.board.append(tubes[12:16])
-
-
-        for j in range (0,2):
-            tube_0 = [(255,255,255) for i in range (0,4)]
-            self.board.append(tube_0)
-    
-    
+        for _ in range(2):
+            empty_tube = [(255, 255, 255)] * size_tubes
+            self.board.append(empty_tube)
 
     def handle_click(self, tube_selected):
         if self.selected_tube == None:
