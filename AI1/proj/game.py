@@ -7,8 +7,8 @@ from solver import Solver
 from copy import deepcopy
 from objects.shelf import Shelf
 from objects.x_button import XButton
-
-
+from objects.hint_button import HintButton
+from objects.reset_button import ResetButton
 
 class Game:
     def __init__(self, width, height, num_colors, tube_size):
@@ -41,8 +41,8 @@ class Game:
         self.setup_tubes()
 
         
-        self.hintButton = Button(self.width - 120, self.height - 70, 100, 40, (0,255,255))
-        self.resetButton = Button(20, self.height - 70, 100, 40, (0,255,0))
+        self.hintButton = HintButton(self.width, self.height, self.num_hints)
+        self.resetButton = ResetButton(self.width, self.height)
         self.buttonBack = Button(self.width - 300, self.height - 70, 100, 40, (0,255,255))
         self.buttonNext = Button(self.width - 150, self.height - 70, 100, 40, (0,255,255))
      
@@ -70,18 +70,11 @@ class Game:
             self.hintButton.draw(surface)
             self.x.draw(surface)
 
-            reset_text = self.font.render("Reset", True, (0, 0, 0))
-            hint_text = self.font.render(f"Hint ({self.num_hints})", True, (0, 0, 0))
-            surface.blit(reset_text, (self.resetButton.x + 5, self.resetButton.y + 5))
-            surface.blit(hint_text, (self.hintButton.x + 5, self.hintButton.y + 5))
-
         else:
             self.buttonBack.draw(surface)
             self.buttonNext.draw(surface)
 
-            back_text = self.font.render("Reset", True, (0, 0, 0))
             next_text = self.font.render("Next", True, (0, 0, 0))
-            surface.blit(back_text, (self.buttonBack.x + 15, self.buttonBack.y + 20))
             surface.blit(next_text, (self.buttonNext.x + 15, self.buttonNext.y + 20))
 
         layer_height = 120 // self.tube_size
@@ -118,6 +111,7 @@ class Game:
             
             
         self.controller.board = [list(tube) for tube in best_board.board]
+        self.hintButton.decrement()
 
 
 
@@ -134,8 +128,8 @@ class Game:
                 return "next"
 
         else:
-            buttonRect = pygame.Rect(self.width - 120, self.height - 70, 100, 40)
-            resetRect = pygame.Rect(20, self.height - 70, 100, 40)
+            buttonRect = self.hintButton.rect
+            resetRect = self.resetButton.rect
 
             tube_selected = None
         

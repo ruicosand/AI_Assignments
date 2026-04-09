@@ -125,6 +125,9 @@ class App:
                         else: 
                             self.state = "solverMenu"
                             self.solverMenu = SolverMenu(self.width,self.height) 
+                    if level == "exit":
+                        self.state = "menu"
+                        
                 
             elif self.state == "solverMenu":
                 clicked = self.solverMenu.handle_click(event.pos)

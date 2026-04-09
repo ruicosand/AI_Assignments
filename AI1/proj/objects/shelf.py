@@ -2,18 +2,25 @@ import pygame
 
 class Shelf:
     def __init__(self, x, y, width, height):
-        self.x = x
-        self.y = y
         self.width = width
         self.height = height
-        
+
         try:
+            # 1. Load the original sprite
             raw_shelf = pygame.image.load("images/shelf.png").convert_alpha()
-            self.image = pygame.transform.scale(raw_shelf, (self.width, self.height))
-        except:
-            # Fallback to a brown rectangle if image is missing
-            self.image = pygame.Surface((self.width, self.height))
-            self.image.fill((139, 69, 19)) 
+
+            # 2. Find the actual area containing pixels (removes empty space)
+            cropping_rect = raw_shelf.get_bounding_rect()
+            cropped_shelf = raw_shelf.subsurface(cropping_rect)
+
+            # 3. Scale ONLY the cropped version
+            self.image = pygame.transform.scale(cropped_shelf, (self.width, self.height))
+
+            self.rect = self.image.get_rect(topleft=(x, y))
+        except Exception as e:
+            print(f"Shelf Image Error: {e}")
+            self.image = None
 
     def draw(self, surface):
-        surface.blit(self.image, (self.x, self.y))
+        if self.image:
+            surface.blit(self.image, self.rect)

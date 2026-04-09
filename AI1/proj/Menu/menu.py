@@ -31,9 +31,9 @@ class Menu:
         self.witch = Witch(screen_width, screen_height)
                
         self.shelves = [
-            Shelf(250, 250, 400, 400),  # Shelf 1
-            Shelf(250, 400, 400, 400),  # Shelf 2
-            Shelf(250, 550, 400, 400)  # Shelf 3
+            Shelf(screen_width // 2 + 17, screen_height // 2 + 20, 38 * 7, 3 * 7),  # Shelf 1
+            Shelf(screen_width // 2 + 17, screen_height // 2 + 165 , 38 * 7, 3 * 7),  # Shelf 2
+            Shelf(screen_width // 2 + 17, screen_height // 2 + 315, 38 * 7, 3 * 7)  # Shelf 3
         ]
         
         self.play_btn = PlayButton(screen_width, screen_height)

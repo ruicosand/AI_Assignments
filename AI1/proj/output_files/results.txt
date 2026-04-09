@@ -391,3 +391,42 @@ Expanded Nodes: 0.7243
 
 
 
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 12
+Expanded Nodes: 4629
+Generated Nodes: 20044
+Expanded Nodes: 0.2014
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 12
+Expanded Nodes: 4629
+Generated Nodes: 20044
+Expanded Nodes: 0.2014
+
+
+
+
+
+========== Stats ==========
+Algorithm: Weight
+Heuristic: h1 => Color changes
+
+Moves: 12
+Expanded Nodes: 4078
+Generated Nodes: 9747
+Expanded Nodes: 0.2342
+
+
+
+
+
