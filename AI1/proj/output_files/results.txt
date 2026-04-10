@@ -152,3 +152,133 @@ Expanded Nodes: 0.9664
 
 
 
+========== Stats ==========
+Algorithm: Star
+Heuristic: h2 => Mixed tubes
+
+Moves: 8
+Expanded Nodes: 933
+Generated Nodes: 3894
+Expanded Nodes: 0.3480
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 10
+Expanded Nodes: 2863
+Generated Nodes: 12211
+Expanded Nodes: 0.8540
+
+
+
+
+
+========== Stats ==========
+Algorithm: DFS
+Heuristic: None
+
+Moves: 231
+Expanded Nodes: 232
+Generated Nodes: 1152
+Expanded Nodes: 0.0792
+
+
+
+
+
+========== Stats ==========
+Algorithm: UCS
+Heuristic: None
+
+Moves: 10
+Expanded Nodes: 3675
+Generated Nodes: 14887
+Expanded Nodes: 1.1651
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h3 => h1 + h2
+
+Moves: 20
+Expanded Nodes: 60
+Generated Nodes: 296
+Expanded Nodes: 0.0443
+
+
+
+
+
+========== Stats ==========
+Algorithm: DFS
+Heuristic: None
+
+Moves: 16
+Expanded Nodes: 17
+Generated Nodes: 48
+Expanded Nodes: 0.0018
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h3 => h1 + h2
+
+Moves: 29
+Expanded Nodes: 240
+Generated Nodes: 634
+Expanded Nodes: 0.0863
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 21
+Expanded Nodes: 198687
+Generated Nodes: 572664
+Expanded Nodes: 50.7447
+
+
+
+
+
+========== Stats ==========
+Algorithm: UCS
+Heuristic: None
+
+Moves: 21
+Expanded Nodes: 147125
+Generated Nodes: 451499
+Expanded Nodes: 53.7800
+
+
+
+
+
+========== Stats ==========
+Algorithm: Star
+Heuristic: h3 => h1 + h2
+
+Moves: 14
+Expanded Nodes: 71
+Generated Nodes: 230
+Expanded Nodes: 0.0106
+
+
+
+
+
