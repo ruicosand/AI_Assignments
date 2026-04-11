@@ -107,24 +107,20 @@ class Game:
 
     def handle_hint(self):
         initial_state = WaterSort(self.controller.board)
-
         solver = Solver(initial_state)
-
         possible_boards = initial_state.generate_boards()
 
-        best_board = possible_boards[0]
-        min_heuristic = solver.heuristic_3(possible_boards[0])
+        best_board, _ = possible_boards[0]
+        min_heuristic = solver.heuristic_3(best_board)
         
-        for i in range(1,len(possible_boards)):
-            heuristic_value = solver.heuristic_3(possible_boards[i])
+        for state, _ in possible_boards[1:]:
+            heuristic_value = solver.heuristic_3(state)
             if heuristic_value < min_heuristic:
-                best_board = possible_boards[i]
-                min_heuristic = heuristic_value 
-            
+                best_board = state
+                min_heuristic = heuristic_value
             
         self.controller.board = [list(tube) for tube in best_board.board]
         self.hintButton.decrement()
-
 
 
     def handle_click(self,pos):
@@ -166,7 +162,8 @@ class Game:
                     self.num_hints = 2
                 else: self.num_hints = 3
 
-                self.controller.board = self.initial_board
+                self.controller.board = deepcopy(self.initial_board)
+                self.hintButton.reset(self.num_hints)
                 return False
 
             if self.x.rect.collidepoint(pos):

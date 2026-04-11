@@ -20,6 +20,9 @@ class HintButton:
 
         self.font = pygame.font.SysFont(None, 68)
 
+    def reset(self, hint_count):
+        self.hint_count = hint_count
+
     def increment(self):
         self.hint_count += 1
     def decrement(self):
