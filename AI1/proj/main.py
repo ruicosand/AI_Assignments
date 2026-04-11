@@ -32,6 +32,7 @@ class App:
         self.solver = None
         self.pending_win = 0
         self.selected_heuristic_code = None
+        self.hint_counter = 0
 
     def on_init(self):
         pygame.init()
@@ -86,7 +87,8 @@ class App:
                    self.state = "menu"
 
                 if value == "next":
-                    self.game = Game(self.width,self.height, self.num_colors, self.tube_size)
+                    self.hint_counter = self.game.num_hints
+                    self.game = Game(self.width, self.height, self.num_colors, self.tube_size, extra_hints=self.hint_counter)
                     
                 if value == True:
                     self.pending_win = 2
@@ -146,6 +148,9 @@ class App:
                 elif clicked in (2, 3, 4):
                    
                     self._launch_solver(algorithm, clicked)
+                
+                elif clicked == "exit":
+                    self.state = "menu"
 
             elif self.state == "solver_stats":
                 clicked = self.solverStats.handle_click(event.pos)

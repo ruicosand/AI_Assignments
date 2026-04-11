@@ -7,6 +7,7 @@ from Menu.background import Background
 from solver import Solver
 import tkinter as tk
 from tkinter import filedialog
+from objects.shelf import Shelf
 
 class SolverGame:
     def __init__(self, width, height, num_colors, tube_size):
@@ -32,14 +33,22 @@ class SolverGame:
         total_lines = total_tubes // 3
 
         remaining_space = (self.width - 3 * 60) / 4
+        
+        shelf_width = int(3 * 60 + 2 * remaining_space)
+        shelf_x = int(remaining_space)
+        shelf_height = 3 * 7
+        
+        self.shelves = []
 
         for line in range(total_lines):
-            pos_y = 100 + line * (120 + 40)  
+            pos_y = 50 + line * (120 + 40)  
             pos_x = remaining_space
 
             for col in range(3):
                 self.tubes_positions.append((pos_x, pos_y))
                 pos_x += 60 + remaining_space
+            
+            self.shelves.append(Shelf(shelf_x - 5, int(pos_y + 120), shelf_width + 10, shelf_height))
 
     def update_state(self):
         self.timer += 1
@@ -68,6 +77,10 @@ class SolverGame:
             for j, color in enumerate(board.board[i]):
                 y = pos[1] + 120 - (j + 1) * layer_height  
                 pygame.draw.rect(surface, color, (pos[0], y + y_offset, 60, layer_height))
+                
+        for shelf in self.shelves:
+            shelf.draw(surface)
+
 
     
     def build_board(self):

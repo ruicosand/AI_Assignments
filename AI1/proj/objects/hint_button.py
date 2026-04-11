@@ -32,5 +32,5 @@ class HintButton:
 
             # Draw the counter on top of the button
             count_text = self.font.render(str(self.hint_count), True, (237, 135, 37))
-            text_rect = count_text.get_rect(midtop=(self.rect.centerx, self.rect.top - 50))
+            text_rect = count_text.get_rect(midtop=(self.rect.centerx + 100, self.rect.top - 50))
             surface.blit(count_text, text_rect)

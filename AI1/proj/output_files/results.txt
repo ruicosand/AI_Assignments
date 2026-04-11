@@ -430,3 +430,315 @@ Expanded Nodes: 0.2342
 
 
 
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 9
+Expanded Nodes: 1912
+Generated Nodes: 8750
+Expanded Nodes: 0.1167
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 13
+Expanded Nodes: 6437
+Generated Nodes: 29392
+Expanded Nodes: 0.3441
+
+
+
+
+
+========== Stats ==========
+Algorithm: UCS
+Heuristic: None
+
+Moves: 10
+Expanded Nodes: 2964
+Generated Nodes: 13076
+Expanded Nodes: 0.3591
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 6
+Expanded Nodes: 670
+Generated Nodes: 3243
+Expanded Nodes: 0.0408
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 10
+Expanded Nodes: 3421
+Generated Nodes: 15661
+Expanded Nodes: 0.2069
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 11
+Expanded Nodes: 6149
+Generated Nodes: 26928
+Expanded Nodes: 0.3541
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 11
+Expanded Nodes: 6149
+Generated Nodes: 26928
+Expanded Nodes: 0.3541
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 12
+Expanded Nodes: 6071
+Generated Nodes: 27053
+Expanded Nodes: 0.3202
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 20
+Expanded Nodes: 753543
+Generated Nodes: 3925461
+Expanded Nodes: 82.5828
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 12
+Expanded Nodes: 6365
+Generated Nodes: 27788
+Expanded Nodes: 0.3176
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 10
+Expanded Nodes: 3294
+Generated Nodes: 14823
+Expanded Nodes: 0.1712
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 12
+Expanded Nodes: 5480
+Generated Nodes: 24340
+Expanded Nodes: 0.3131
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 11
+Expanded Nodes: 3256
+Generated Nodes: 14109
+Expanded Nodes: 0.1696
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 10
+Expanded Nodes: 3442
+Generated Nodes: 15354
+Expanded Nodes: 0.1771
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 11
+Expanded Nodes: 6097
+Generated Nodes: 25986
+Expanded Nodes: 0.3196
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 13
+Expanded Nodes: 8196
+Generated Nodes: 37065
+Expanded Nodes: 0.4317
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 10
+Expanded Nodes: 4612
+Generated Nodes: 19768
+Expanded Nodes: 0.2399
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 19
+Expanded Nodes: 209276
+Generated Nodes: 988302
+Expanded Nodes: 18.7518
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 19
+Expanded Nodes: 209276
+Generated Nodes: 988302
+Expanded Nodes: 18.7518
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 11
+Expanded Nodes: 5453
+Generated Nodes: 25235
+Expanded Nodes: 0.2926
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 12
+Expanded Nodes: 7253
+Generated Nodes: 30923
+Expanded Nodes: 0.3806
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 10
+Expanded Nodes: 2594
+Generated Nodes: 12369
+Expanded Nodes: 0.1376
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 11
+Expanded Nodes: 4585
+Generated Nodes: 20829
+Expanded Nodes: 0.2524
+
+
+
+
+
+========== Stats ==========
+Algorithm: BFS
+Heuristic: None
+
+Moves: 12
+Expanded Nodes: 6643
+Generated Nodes: 28585
+Expanded Nodes: 0.3293
+
+
+
+
+

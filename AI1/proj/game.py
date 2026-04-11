@@ -9,9 +9,10 @@ from objects.shelf import Shelf
 from objects.x_button import XButton
 from objects.hint_button import HintButton
 from objects.reset_button import ResetButton
+from objects.next_button import NextButton
 
 class Game:
-    def __init__(self, width, height, num_colors, tube_size):
+    def __init__(self, width, height, num_colors, tube_size, extra_hints = 0):
         self.controller = GameController(num_colors,tube_size)
         self.num_colors = num_colors
         self.initial_board = deepcopy(self.controller.board)
@@ -33,6 +34,9 @@ class Game:
         elif num_colors == 10:
             self.difficulty = 2
             self.num_hints = 4
+            
+        self.num_hints += extra_hints
+        
     
 
         self.background = Background(width,height)
@@ -43,8 +47,8 @@ class Game:
         
         self.hintButton = HintButton(self.width, self.height, self.num_hints)
         self.resetButton = ResetButton(self.width, self.height)
-        self.buttonBack = Button(self.width - 300, self.height - 70, 100, 40, (0,255,255))
-        self.buttonNext = Button(self.width - 150, self.height - 70, 100, 40, (0,255,255))
+        self.buttonBack = ResetButton(self.width, self.height)
+        self.buttonNext = NextButton(self.width, self.height)
      
 
     def setup_tubes(self):
@@ -53,14 +57,22 @@ class Game:
         total_lines = total_tubes // 3
 
         remaining_space = (self.width - 3 * 60) / 4
+        
+        shelf_width = int(3 * 60 + 2 * remaining_space)
+        shelf_x = int(remaining_space)
+        shelf_height = 3 * 7
+        
+        self.shelves = []
 
         for line in range(total_lines):
-            pos_y = 100 + line * (120 + 40)  
+            pos_y = 50 + line * (120 + 40)  
             pos_x = remaining_space
 
             for col in range(3):
                 self.tubes_positions.append((pos_x, pos_y))
                 pos_x += 60 + remaining_space
+            
+            self.shelves.append(Shelf(shelf_x - 5, int(pos_y + 120), shelf_width + 10, shelf_height))
 
     def draw(self,surface):
         self.background.draw(surface)
@@ -73,9 +85,6 @@ class Game:
         else:
             self.buttonBack.draw(surface)
             self.buttonNext.draw(surface)
-
-            next_text = self.font.render("Next", True, (0, 0, 0))
-            surface.blit(next_text, (self.buttonNext.x + 15, self.buttonNext.y + 20))
 
         layer_height = 120 // self.tube_size
 
@@ -91,6 +100,9 @@ class Game:
             for j, color in enumerate(self.controller.board[i]):
                 y = pos[1] + 120 - (j + 1) * layer_height
                 pygame.draw.rect(surface, color, (pos[0], y + y_offset, 60, layer_height))
+                
+        for shelf in self.shelves:
+            shelf.draw(surface)
 
 
     def handle_hint(self):
@@ -117,8 +129,8 @@ class Game:
 
     def handle_click(self,pos):
         if self.isWon:
-            backRect = pygame.Rect(self.width - 300, self.height - 70, 100, 40)
-            nextRect = pygame.Rect(self.width - 150, self.height - 70, 100, 40)
+            backRect = self.resetButton.rect
+            nextRect = self.buttonNext.rect
 
             if backRect.collidepoint(pos):
                 self.controller.board = self.initial_board
