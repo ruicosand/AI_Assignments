@@ -1,5 +1,6 @@
 class TreeNode:
     def __init__(self, state, parent=None):
+        # Node representing a state in the search tree
         self.state = state
         self.parent = parent
         self.cost = 0
@@ -9,6 +10,7 @@ class TreeNode:
         self.last_move = None
 
     def add_child(self, child_node, operator_cost=0, heuristic_value=0):
+        # Link child to parent and update path/heuristic costs
         child_node.cost = self.cost + operator_cost
         child_node.depth = self.depth + 1
         child_node.heuristic_value = heuristic_value
@@ -16,14 +18,17 @@ class TreeNode:
         child_node.parent = self
 
 
+# Represents an empty slot in a tube
 EMPTY = (255, 255, 255)
 
 
 class WaterSort:
 
     def __init__(self, board, move_history=[]):
+        # Immutable representation of the board
         self.board = tuple(tuple(bottle) for bottle in board)
 
+    # Helpers to inspect tube contents
     def get_top(self, tube):
         for i in range(len(tube) - 1, -1, -1):
             if tube[i] != EMPTY:
@@ -42,10 +47,12 @@ class WaterSort:
                 return i
         return None
 
+    # Check if a tube is already correctly filled
     def is_tube_complete(self, tube):
         colors = set(c for c in tube if c != EMPTY)
         return len(colors) == 1 and self.get_first_empty(tube) is None
 
+    # Check if moving from one tube to another is allowed
     def can_move(self, tube_to_move, tube_to_receive):
         tube1 = self.board[tube_to_move]
         tube2 = self.board[tube_to_receive]
@@ -58,6 +65,7 @@ class WaterSort:
                 return True
         return False
 
+    # Execute a move and return a new game state
     def move_color(self, tube_to_move, tube_to_receive):
         new_board = [list(tube) for tube in self.board]
         tube1 = new_board[tube_to_move]
@@ -69,6 +77,7 @@ class WaterSort:
         tube1[color1_index] = EMPTY
         return WaterSort(new_board)
 
+    # Check if all tubes are correctly sorted
     def is_won(self):
         for tube in self.board:
             color_verify = self.get_top(tube)
@@ -81,6 +90,7 @@ class WaterSort:
                     return False
         return True
 
+    # Generate all possible next states from the current board
     def generate_boards(self, last_move=None):
         child_boards = []
 
@@ -100,15 +110,18 @@ class WaterSort:
                 if i == j:
                     continue
 
+                # Avoid undoing the previous move
                 if last_move is not None and (i, j) == (last_move[1], last_move[0]):
                     continue
 
                 tube_j = self.board[j]
                 top_j = self.get_top(tube_j)
 
+                # Skip trivial move of a single-color tube into empty
                 if top_j is None and len(colors_i) == 1:
                     continue
 
+                # Apply move repeatedly while possible
                 state_temp = self
                 color_tube_move = top_i
                 while (state_temp.get_top(state_temp.board[i]) == color_tube_move

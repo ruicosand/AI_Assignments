@@ -5,30 +5,37 @@ from objects.replay_button import ReplayButton
 from objects.exit_button import ExitButton
 from objects.empty import Empty
 
+# Screen that shows statistics after the solver finishes
 class SolverStats:
-    def __init__(self, screen_width, screen_height, solver, num_moves, algorithm, heuristic_name):
+    def __init__(self, screen_width, screen_height, solver, num_moves, algorithm, heuristic_name, level):
+        # Background and visual elements
         self.background = Background(screen_width, screen_height)
         self.empty = Empty(screen_width, screen_height)
+
+        # Fonts for displaying text
         self.font = pygame.font.SysFont("Arial", 40, bold=True)
         self.font_small = pygame.font.SysFont("Arial", 24)
 
+        # Store solver results
         self.solver = solver
         self.num_moves = num_moves
         self.algorithm = algorithm
         self.heuristic_name = heuristic_name
+        self.level = level
 
+        # UI buttons
         self.btn_replay = ReplayButton(screen_width, screen_height)
         self.btn_menu   = ExitButton(screen_width, screen_height)
 
-
-
+        # Save stats to file
         self.save_results()
 
-
+    # Write results to a text file
     def save_results(self):
         with open("output_files/results.txt", "a") as f:
             f.write(f"="*10 + " Stats " + "="*10 + "\n")
 
+            f.write(f"Level: {self.level}\n")
             f.write(f"Algorithm: {self.algorithm}\n")
             f.write(f"Heuristic: {self.heuristic_name}\n\n")
 
@@ -38,8 +45,7 @@ class SolverStats:
             f.write(f"Expanded Nodes: {self.solver.time_execution:.4f}\n")
             f.write("\n"*5)
 
-
-
+    # Draw stats screen
     def draw(self, surface):
         self.background.draw(surface)
         self.empty.draw(surface)
@@ -47,7 +53,9 @@ class SolverStats:
         title = self.font.render("Solver Stats", True, (255, 255, 255))
         surface.blit(title, (surface.get_width() // 2 - title.get_width() // 2, 40))
 
+        # Key statistics to display
         stats = [
+            ("Level",           self.level),
             ("Algorithm",       self.algorithm),
             ("Heuristic",       self.heuristic_name),
             ("Moves",           str(self.num_moves)),
@@ -56,6 +64,7 @@ class SolverStats:
             ("Time (s)",        f"{self.solver.time_execution:.4f}"),
         ]
 
+        # Draw each stat line
         y = 120
         for label, value in stats:
             lbl = self.font_small.render(f"{label}:", True, (117, 28, 92))
@@ -64,9 +73,11 @@ class SolverStats:
             surface.blit(val, (280, y))
             y += 40
 
+        # Draw buttons
         self.btn_replay.draw(surface)
         self.btn_menu.draw(surface)
 
+    # Handle button clicks
     def handle_click(self, mouse_pos):
         r = self.btn_replay.rect
         m = self.btn_menu.rect

@@ -4,18 +4,22 @@ from collections import deque
 import heapq
 import time
 
-
+# Class responsible for solving the Water Sort puzzle using different search strategies
 class Solver:
 
     def __init__(self, inital_state):
+        # Initial board configuration
         self.initialBoard = inital_state
+        # Metrics for performance evaluation
         self.time_execution = 0
         self.expanded_nodes = 0
         self.generated_nodes = 0
 
     # ---------------- HEURISTICS ----------------
+    # Each heuristic estimates how far a given state is from the goal
 
     def heuristic_1(self, state):
+        # Counts color changes inside tubes (fewer is better)
         from waterSort import EMPTY
         total_changes = 0
         for tube in state.board:
@@ -26,6 +30,7 @@ class Solver:
         return total_changes
 
     def heuristic_2(self, state):
+        # Counts how many tubes contain mixed colors
         from waterSort import EMPTY
         count_tubes = 0
         for tube in state.board:
@@ -35,11 +40,13 @@ class Solver:
         return count_tubes
 
     def heuristic_3(self, state):
+        # Combined heuristic
         return self.heuristic_1(state) + self.heuristic_2(state)
 
-    # ---------------- A* ----------------
+    # ---------------- A* SEARCH ----------------
 
     def a_star_search(self, heuristic):
+        # Reset metrics
         self.expanded_nodes = 0
         self.generated_nodes = 0
         self.time_execution = 0
@@ -47,6 +54,7 @@ class Solver:
         root = TreeNode(self.initialBoard)
         root.cost = 0
 
+        # Priority queue based on f = g + h
         queue = []
         counter = 0
         heapq.heappush(queue, (heuristic(root.state), counter, root))
@@ -55,19 +63,23 @@ class Solver:
         visited_states = {}
         time1 = time.perf_counter()
 
+        # Main loop
         while queue:
             _, _, current_board = heapq.heappop(queue)
 
+            # Skip if already visited with lower cost
             if current_board.state in visited_states and visited_states[current_board.state] <= current_board.cost:
                 continue
 
             visited_states[current_board.state] = current_board.cost
             self.expanded_nodes += 1
 
+            # Goal check
             if current_board.state.is_won():
                 self.time_execution = time.perf_counter() - time1
                 return current_board
 
+            # Expand neighbors
             for state, move in current_board.state.generate_boards(current_board.last_move):
                 child_board = TreeNode(state)
                 self.generated_nodes += 1
@@ -83,9 +95,10 @@ class Solver:
         self.time_execution = time.perf_counter() - time1
         return None
 
-    # ---------------- WEIGHTED A* ----------------
+    # ---------------- WEIGHTED A* SEARCH ----------------
 
     def weigth_star_search(self, heuristic, weight):
+        # Similar to A*, but heuristic is weighted
         self.expanded_nodes = 0
         self.generated_nodes = 0
         self.time_execution = 0
@@ -129,9 +142,10 @@ class Solver:
         self.time_execution = time.perf_counter() - time1
         return None
 
-    # ---------------- GREEDY (otimizacao 3: heapq em vez de sort) ----------------
+    # ---------------- GREEDY SEARCH ----------------
 
     def greedy_search(self, heuristic):
+        # Always expands the node with the best heuristic value
         self.expanded_nodes = 0
         self.generated_nodes = 0
         self.time_execution = 0
@@ -171,9 +185,10 @@ class Solver:
         self.time_execution = time.perf_counter() - time1
         return None
 
-    # ---------------- BFS ----------------
+    # ---------------- BREADTH-FIRST SEARCH ----------------
 
     def bfs_search(self):
+        # Explore states layer by layer
         self.expanded_nodes = 0
         self.generated_nodes = 0
         self.time_execution = 0
@@ -207,9 +222,10 @@ class Solver:
         self.time_execution = time.perf_counter() - time1
         return None
 
-    # ---------------- DFS ----------------
+    # ---------------- DEPTH-FIRST SEARCH ----------------
 
     def dfs_search(self):
+        # Explores as deep as possible before backtracking
         self.expanded_nodes = 0
         self.generated_nodes = 0
         self.time_execution = 0
@@ -243,9 +259,10 @@ class Solver:
         self.time_execution = time.perf_counter() - time1
         return None
 
-    # ---------------- UCS ----------------
+    # ---------------- UNIFORM COST SEARCH ----------------
 
     def uniform_cost_search(self):
+        # Expands nodes in order of lowest path cost
         self.expanded_nodes = 0
         self.generated_nodes = 0
         self.time_execution = 0
