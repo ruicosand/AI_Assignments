@@ -13,8 +13,6 @@ class Solver:
         self.expanded_nodes = 0
         self.generated_nodes = 0
 
-    # ---------------- HEURISTICS ----------------
-
     def heuristic_1(self, state):
         from waterSort import EMPTY
         total_changes = 0
@@ -36,8 +34,6 @@ class Solver:
 
     def heuristic_3(self, state):
         return self.heuristic_1(state) + self.heuristic_2(state)
-
-    # ---------------- A* ----------------
 
     def a_star_search(self, heuristic):
         self.expanded_nodes = 0
@@ -83,8 +79,6 @@ class Solver:
         self.time_execution = time.perf_counter() - time1
         return None
 
-    # ---------------- WEIGHTED A* ----------------
-
     def weigth_star_search(self, heuristic, weight):
         self.expanded_nodes = 0
         self.generated_nodes = 0
@@ -129,8 +123,6 @@ class Solver:
         self.time_execution = time.perf_counter() - time1
         return None
 
-    # ---------------- GREEDY (otimizacao 3: heapq em vez de sort) ----------------
-
     def greedy_search(self, heuristic):
         self.expanded_nodes = 0
         self.generated_nodes = 0
@@ -171,8 +163,6 @@ class Solver:
         self.time_execution = time.perf_counter() - time1
         return None
 
-    # ---------------- BFS ----------------
-
     def bfs_search(self):
         self.expanded_nodes = 0
         self.generated_nodes = 0
@@ -207,8 +197,6 @@ class Solver:
         self.time_execution = time.perf_counter() - time1
         return None
 
-    # ---------------- DFS ----------------
-
     def dfs_search(self):
         self.expanded_nodes = 0
         self.generated_nodes = 0
@@ -242,8 +230,6 @@ class Solver:
 
         self.time_execution = time.perf_counter() - time1
         return None
-
-    # ---------------- UCS ----------------
 
     def uniform_cost_search(self):
         self.expanded_nodes = 0
