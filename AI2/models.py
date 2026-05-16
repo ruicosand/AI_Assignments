@@ -1,0 +1,223 @@
+import pandas as pd
+from sklearn.ensemble import IsolationForest
+
+
+
+dataset = pd.read_excel("data/all_chargers_pivoted.xlsx")
+
+dataset = dataset.sort_values('Timestamp')
+
+eletric_values = ['Current.Import_L1','Current.Import_L2',"Current.Import_L3","Power.Active.Import","Power.Offered" ,"Voltage_L1", "Voltage_L2", "Voltage_L3"]
+
+information_values = ['ChargePointId', 'ConnectorId', 'Timestamp']
+
+anomaly_features = dataset[ information_values + eletric_values]
+
+anomaly_features = anomaly_features.dropna()
+
+n = anomaly_features.shape[0]
+
+train_data = anomaly_features.head(int(n * 0.70)).copy()
+
+test_data = anomaly_features.tail(int(n * 0.30)).copy()
+
+
+model = IsolationForest(contamination=0.05)
+
+model.fit(train_data[eletric_values])
+
+isAnomaly = model.predict(test_data[eletric_values])
+
+anomaly_score = model.score_samples(test_data[eletric_values])
+
+
+test_data['isAnomaly'] = isAnomaly
+test_data['AnomScore'] = anomaly_score
+
+test_data = test_data.sort_values('AnomScore')
+
+
+test_data_anomalies = test_data[test_data['isAnomaly'] == -1]
+
+chargers = test_data_anomalies.groupby('ChargePointId').count().sort_values('isAnomaly', ascending=False)
+anomaly_descript = []
+
+for charger_id in chargers.index:
+
+    charger_anomaly = test_data_anomalies[test_data_anomalies['ChargePointId'] == charger_id].sort_values('AnomScore')
+
+    # tensão
+
+    tension_information = charger_anomaly.head(20)[['Voltage_L1', 'Voltage_L2', 'Voltage_L3']].describe()
+
+
+    mean_value = tension_information.loc['mean']
+    
+
+    if not (220 < mean_value['Voltage_L1'] < 240):
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Voltage_L1 out of standards',
+            'Voltage_L1': mean_value['Voltage_L1'],
+            'Voltage_L2': mean_value['Voltage_L2'],
+            'Voltage_L3': mean_value['Voltage_L3'],
+        })
+
+
+    if not (220 < mean_value['Voltage_L2'] < 240):
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Voltage_L2 out of standards',
+            'Voltage_L1': mean_value['Voltage_L1'],
+            'Voltage_L2': mean_value['Voltage_L2'],
+            'Voltage_L3': mean_value['Voltage_L3'],
+        })
+
+    if not (220 < mean_value['Voltage_L3'] < 240):
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Voltage_L3 out of standards',
+            'Voltage_L1': mean_value['Voltage_L1'],
+            'Voltage_L2': mean_value['Voltage_L2'],
+            'Voltage_L3': mean_value['Voltage_L3'],
+        })
+
+
+    if abs(mean_value['Voltage_L1'] - mean_value['Voltage_L2']) > 10:
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Difference between Phases 1 and 2 out of standards',
+            'Voltage_L1': mean_value['Voltage_L1'],
+            'Voltage_L2': mean_value['Voltage_L2'],
+            'Voltage_L3': mean_value['Voltage_L3'],
+        })
+
+    if abs(mean_value['Voltage_L1'] - mean_value['Voltage_L3']) > 10:
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Difference between Phases 1 and 2 out of standards',
+            'Voltage_L1': mean_value['Voltage_L1'],
+            'Voltage_L2': mean_value['Voltage_L2'],
+            'Voltage_L3': mean_value['Voltage_L3'],
+        })
+
+    if abs(mean_value['Voltage_L2'] - mean_value['Voltage_L3']) > 10:
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Difference between Phases 1 and 2 out of standards',
+            'Voltage_L1': mean_value['Voltage_L1'],
+            'Voltage_L2': mean_value['Voltage_L2'],
+            'Voltage_L3': mean_value['Voltage_L3'],
+        })
+
+
+
+    # corrente 
+
+    corrent_information = charger_anomaly.head(20).copy()
+
+    corrent_information['equilibrio_L1_L2'] = (corrent_information['Current.Import_L1'] == 0)  & (corrent_information['Current.Import_L2'] > 0) & (corrent_information['Current.Import_L3'] > 0)
+
+    corrent_information['equilibrio_L2_L1'] = (corrent_information['Current.Import_L2'] == 0)  & (corrent_information['Current.Import_L1'] > 0) & (corrent_information['Current.Import_L3'] > 0)
+
+    corrent_information['equilibrio_L3_L1'] = (corrent_information['Current.Import_L3'] == 0)  & (corrent_information['Current.Import_L1'] > 0) & (corrent_information['Current.Import_L2'] > 0)
+
+
+    corrent_information['desequilibrio_L1_L2'] = abs(corrent_information['Current.Import_L1'] - corrent_information['Current.Import_L2']) > 2
+
+    corrent_information['desequilibrio_L1_L3'] = abs(corrent_information['Current.Import_L1'] - corrent_information['Current.Import_L3']) > 2
+
+    corrent_information['desequilibrio_L2_L3'] = abs(corrent_information['Current.Import_L2'] - corrent_information['Current.Import_L3']) > 2
+
+    if corrent_information['equilibrio_L1_L2'].any():
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Corrent with different values',
+            'Current.Import_L1': mean_value['Current.Import_L1'],
+            'Current.Import_L2': mean_value['Current.Import_L2'],
+            'Current.Import_L3': mean_value['Current.Import_L3'],
+        })
+
+    if corrent_information['equilibrio_L2_L1'].any():
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Corrent with different values',
+            'Current.Import_L1': mean_value['Current.Import_L1'],
+            'Current.Import_L2': mean_value['Current.Import_L2'],
+            'Current.Import_L3': mean_value['Current.Import_L3'],
+        })
+
+    if corrent_information['equilibrio_L3_L1'].any():
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Corrent with different values',
+            'Current.Import_L1': mean_value['Current.Import_L1'],
+            'Current.Import_L2': mean_value['Current.Import_L2'],
+            'Current.Import_L3': mean_value['Current.Import_L3'],
+        })
+
+    if corrent_information['desequilibrio_L1_L2'].any():
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Corrent with different values',
+            'Current.Import_L1': mean_value['Current.Import_L1'],
+            'Current.Import_L2': mean_value['Current.Import_L2'],
+            'Current.Import_L3': mean_value['Current.Import_L3'],
+        })
+
+    if corrent_information['desequilibrio_L1_L3'].any():
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Corrent with different values',
+            'Current.Import_L1': mean_value['Current.Import_L1'],
+            'Current.Import_L2': mean_value['Current.Import_L2'],
+            'Current.Import_L3': mean_value['Current.Import_L3'],
+        })
+
+    if corrent_information['desequilibrio_L2_L3'].any():
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Corrent with different values',
+            'Current.Import_L1': corrent_information['Current.Import_L1'],
+            'Current.Import_L2': corrent_information['Current.Import_L2'],
+            'Current.Import_L3': corrent_information['Current.Import_L3'],
+        })
+
+
+
+    # potência
+
+    potency_information = charger_anomaly.head(50).copy()
+
+    potency_information['powerDifference'] = abs(potency_information['Power.Offered'] - potency_information['Power.Active.Import']) > 2
+
+
+    if potency_information['powerDifference'].any():
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Potency with a difference above 2 kW',
+            'Power_Offered': potency_information['Powered.Offered'],
+            'Power.Active.Import': potency_information['Power.Active.Import']
+        })
+
+    potency_information["Power"] = (potency_information['Voltage_L1'] * potency_information['Current.Import_L1'] + potency_information['Voltage_L2'] * potency_information['Current.Import_L2']
+                                    + potency_information['Voltage_L3'] * potency_information['Current.Import_L3']) / 1000
+
+    potency_information['Power_Diff'] = abs(potency_information["Power"] - potency_information["Power.Active.Import"]) > 1
+
+    if potency_information['Power_Diff'].any():
+        anomaly_descript.append({
+            'ChargePointId': charger_id,
+            'AnomalyType': 'Power superior a 1',
+            'Power': potency_information['Power'].mean(),
+            'Power.Active.Import': potency_information['Power.Active.Import']
+        })
+
+    else:
+        print("Nothing to report")
+
+
+
+anomaly_df = pd.DataFrame(anomaly_descript)
+
+
