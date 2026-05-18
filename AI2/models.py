@@ -1,7 +1,8 @@
 import pandas as pd
 from sklearn.ensemble import IsolationForest
-
-
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt 
 
 dataset = pd.read_excel("data/all_chargers_pivoted.xlsx")
 
@@ -133,54 +134,54 @@ for charger_id in chargers.index:
         anomaly_descript.append({
             'ChargePointId': charger_id,
             'AnomalyType': 'Corrent with different values',
-            'Current.Import_L1': mean_value['Current.Import_L1'],
-            'Current.Import_L2': mean_value['Current.Import_L2'],
-            'Current.Import_L3': mean_value['Current.Import_L3'],
+            'Current.Import_L1': corrent_information['Current.Import_L1'].mean(),
+            'Current.Import_L2': corrent_information['Current.Import_L2'].mean(),
+            'Current.Import_L3': corrent_information['Current.Import_L3'].mean(),
         })
 
     if corrent_information['equilibrio_L2_L1'].any():
         anomaly_descript.append({
             'ChargePointId': charger_id,
             'AnomalyType': 'Corrent with different values',
-            'Current.Import_L1': mean_value['Current.Import_L1'],
-            'Current.Import_L2': mean_value['Current.Import_L2'],
-            'Current.Import_L3': mean_value['Current.Import_L3'],
+            'Current.Import_L1': corrent_information['Current.Import_L1'].mean(),
+            'Current.Import_L2': corrent_information['Current.Import_L2'].mean(),
+            'Current.Import_L3': corrent_information['Current.Import_L3'].mean(),
         })
 
     if corrent_information['equilibrio_L3_L1'].any():
         anomaly_descript.append({
             'ChargePointId': charger_id,
             'AnomalyType': 'Corrent with different values',
-            'Current.Import_L1': mean_value['Current.Import_L1'],
-            'Current.Import_L2': mean_value['Current.Import_L2'],
-            'Current.Import_L3': mean_value['Current.Import_L3'],
+            'Current.Import_L1': corrent_information['Current.Import_L1'].mean(),
+            'Current.Import_L2': corrent_information['Current.Import_L2'].mean(),
+            'Current.Import_L3': corrent_information['Current.Import_L3'].mean(),
         })
 
     if corrent_information['desequilibrio_L1_L2'].any():
         anomaly_descript.append({
             'ChargePointId': charger_id,
             'AnomalyType': 'Corrent with different values',
-            'Current.Import_L1': mean_value['Current.Import_L1'],
-            'Current.Import_L2': mean_value['Current.Import_L2'],
-            'Current.Import_L3': mean_value['Current.Import_L3'],
+            'Current.Import_L1': corrent_information['Current.Import_L1'].mean(),
+            'Current.Import_L2': corrent_information['Current.Import_L2'].mean(),
+            'Current.Import_L3': corrent_information['Current.Import_L3'].mean(),
         })
 
     if corrent_information['desequilibrio_L1_L3'].any():
         anomaly_descript.append({
             'ChargePointId': charger_id,
             'AnomalyType': 'Corrent with different values',
-            'Current.Import_L1': mean_value['Current.Import_L1'],
-            'Current.Import_L2': mean_value['Current.Import_L2'],
-            'Current.Import_L3': mean_value['Current.Import_L3'],
+            'Current.Import_L1': corrent_information['Current.Import_L1'].mean(),
+            'Current.Import_L2': corrent_information['Current.Import_L2'].mean(),
+            'Current.Import_L3': corrent_information['Current.Import_L3'].mean(),
         })
 
     if corrent_information['desequilibrio_L2_L3'].any():
         anomaly_descript.append({
             'ChargePointId': charger_id,
             'AnomalyType': 'Corrent with different values',
-            'Current.Import_L1': corrent_information['Current.Import_L1'],
-            'Current.Import_L2': corrent_information['Current.Import_L2'],
-            'Current.Import_L3': corrent_information['Current.Import_L3'],
+            'Current.Import_L1': corrent_information['Current.Import_L1'].mean(),
+            'Current.Import_L2': corrent_information['Current.Import_L2'].mean(),
+            'Current.Import_L3': corrent_information['Current.Import_L3'].mean(),
         })
 
 
@@ -196,8 +197,8 @@ for charger_id in chargers.index:
         anomaly_descript.append({
             'ChargePointId': charger_id,
             'AnomalyType': 'Potency with a difference above 2 kW',
-            'Power_Offered': potency_information['Powered.Offered'],
-            'Power.Active.Import': potency_information['Power.Active.Import']
+            'Power_Offered': potency_information['Power.Offered'].mean(),
+            'Power.Active.Import': potency_information['Power.Active.Import'].mean()
         })
 
     potency_information["Power"] = (potency_information['Voltage_L1'] * potency_information['Current.Import_L1'] + potency_information['Voltage_L2'] * potency_information['Current.Import_L2']
@@ -210,14 +211,35 @@ for charger_id in chargers.index:
             'ChargePointId': charger_id,
             'AnomalyType': 'Power superior a 1',
             'Power': potency_information['Power'].mean(),
-            'Power.Active.Import': potency_information['Power.Active.Import']
+            'Power.Active.Import': potency_information['Power.Active.Import'].mean()
         })
 
     else:
         print("Nothing to report")
 
 
-
+inertias = []
+silhouette_scores = []
 anomaly_df = pd.DataFrame(anomaly_descript)
+anomaly_df = anomaly_df.fillna(0)
+
+numeric_cols = anomaly_df.select_dtypes(include='number').columns.tolist()
+
+for k in range(2, 7):      
+    model = KMeans(n_clusters=k)
+    model.fit(anomaly_df[numeric_cols])    
+    inertias.append(model.inertia_)
+    score = silhouette_score(anomaly_df[numeric_cols], model.labels_)
+    silhouette_scores.append(score)
 
 
+x = [i for i in range(2, 7)]
+y = silhouette_scores
+
+
+final_model = KMeans(n_clusters=3)
+final_model.fit(anomaly_df[numeric_cols])
+anomaly_df['Cluster'] = final_model.labels_
+
+print(anomaly_df.groupby('Cluster')['AnomalyType'].value_counts())
+print(anomaly_df.groupby('Cluster')['ChargePointId'].value_counts())
