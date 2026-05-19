@@ -1,12 +1,72 @@
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import silhouette_score, mean_absolute_error, r2_score
 import matplotlib.pyplot as plt 
+import numpy as np
+
 
 dataset = pd.read_excel("data/all_chargers_pivoted.xlsx")
 
 dataset = dataset.sort_values('Timestamp')
+
+power = 7.5       # kW — potência média medida nos primeiros minutos
+consumption = 15
+
+# forecasting
+sessions_ids = dataset.groupby('Id').agg({
+    "DurationInMinutes": "first",
+    "ChargePointId": "first",
+    "Power.Active.Import": "mean",
+    "Consumption": "first"
+})
+
+sessions_ids = sessions_ids.dropna()
+
+n = sessions_ids.shape[0]
+
+train_data = sessions_ids.head(int(n * 0.70)).copy()
+
+test_data = sessions_ids.tail(int(n * 0.30)).copy()
+
+modelForecast = DecisionTreeRegressor(max_depth=5, random_state=42)
+
+
+modelForecast.fit(train_data[['Consumption','Power.Active.Import']], train_data['DurationInMinutes'])
+
+
+previsions = modelForecast.predict(test_data[['Consumption','Power.Active.Import']])
+
+
+r2Score = r2_score(test_data['DurationInMinutes'], previsions)
+
+
+meanErrorScore = mean_absolute_error(test_data['DurationInMinutes'], previsions)
+
+
+print("-------- Forecasting --------\n")
+print("Importance of the features in the decision tree:")
+print("\n")
+print(modelForecast.feature_importances_)
+print("R²: ", r2Score)
+print("\n")
+print("MAE: ", meanErrorScore)
+
+# Sessão quase no início
+inicio = pd.DataFrame([[2, 7.5]], columns=['Consumption', 'Power.Active.Import'])
+print(f"Início da sessão: {modelForecast.predict(inicio)[0]:.1f} minutos")
+
+# Sessão a meio
+meio = pd.DataFrame([[10, 7.5]], columns=['Consumption', 'Power.Active.Import'])
+print(f"A meio da sessão: {modelForecast.predict(meio)[0]:.1f} minutos")
+
+# Sessão quase no fim
+fim = pd.DataFrame([[22, 7.5]], columns=['Consumption', 'Power.Active.Import'])
+print(f"Quase no fim: {modelForecast.predict(fim)[0]:.1f} minutos")
+
+'''
+# anomaly detection
 
 eletric_values = ['Current.Import_L1','Current.Import_L2',"Current.Import_L3","Power.Active.Import","Power.Offered" ,"Voltage_L1", "Voltage_L2", "Voltage_L3"]
 
@@ -243,3 +303,5 @@ anomaly_df['Cluster'] = final_model.labels_
 
 print(anomaly_df.groupby('Cluster')['AnomalyType'].value_counts())
 print(anomaly_df.groupby('Cluster')['ChargePointId'].value_counts())
+
+'''
