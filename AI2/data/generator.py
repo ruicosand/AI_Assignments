@@ -238,8 +238,18 @@ def generate_dataset(
     rng = np.random.default_rng(seed)
     random.seed(seed)
 
-    # cycle if n_chargers > 3
-    chargers = [CHARGER_TEMPLATES[i % len(CHARGER_TEMPLATES)] for i in range(n_chargers)]
+    # Cycle template behavior, but keep charger IDs unique so larger n_chargers
+    # really mean more distinct chargers in the resulting dataset.
+    chargers = []
+    template_counts = {t["ChargePointId"]: 0 for t in CHARGER_TEMPLATES}
+    for i in range(n_chargers):
+        template = CHARGER_TEMPLATES[i % len(CHARGER_TEMPLATES)]
+        template_counts[template["ChargePointId"]] += 1
+        charger = dict(template)
+        suffix = template_counts[template["ChargePointId"]]
+        if suffix > 1:
+            charger["ChargePointId"] = f"{template['ChargePointId']}_{suffix}"
+        chargers.append(charger)
 
     total_span_days = (DATE_END - DATE_START).days
     all_rows = []

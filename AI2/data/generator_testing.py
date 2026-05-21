@@ -53,7 +53,7 @@ class SplitConfig:
 
 
 TRAIN_CONFIG = SplitConfig(
-    charger_ids=("/circutor", "/starcharge1"),
+    charger_ids=(),
     anomaly_types=("voltage_out_of_range", "current_zero_phase", "power_offered_diff"),
     anomaly_rate=0.06,
     seed=42,
@@ -65,7 +65,7 @@ TRAIN_CONFIG = SplitConfig(
 )
 
 INFERENCE_CONFIG = SplitConfig(
-    charger_ids=("/starcharge2",),
+    charger_ids=(),
     anomaly_types=("phase_voltage_diff", "current_imbalance", "power_consistency"),
     anomaly_rate=0.04,
     seed=43,
@@ -90,6 +90,17 @@ def _pick_allowed_ids(df: pd.DataFrame, allowed: tuple[str, ...]) -> pd.DataFram
     if not allowed:
         return df.copy()
     return df[df["ChargePointId"].isin(allowed)].copy()
+
+
+def _split_charger_ids(ids: list[str], seed: int, train_fraction: float = 0.67) -> tuple[list[str], list[str]]:
+    if not ids:
+        return [], []
+    shuffled = list(ids)
+    rng = np.random.default_rng(seed)
+    rng.shuffle(shuffled)
+    split_idx = max(1, int(len(shuffled) * train_fraction))
+    split_idx = min(split_idx, len(shuffled) - 1) if len(shuffled) > 1 else 1
+    return shuffled[:split_idx], shuffled[split_idx:]
 
 
 def _soften_faults(df: pd.DataFrame, rng: np.random.Generator) -> pd.DataFrame:
@@ -170,6 +181,34 @@ def _add_noise_and_missingness(df: pd.DataFrame, cfg: SplitConfig, rng: np.rando
     return out
 
 
+def _build_split_from_base(
+    base_df: pd.DataFrame,
+    cfg: SplitConfig,
+    purpose: str,
+    keep_ids: list[str],
+    desired_anomalies: set[str],
+    rng: np.random.Generator,
+    include_labels: bool,
+) -> pd.DataFrame:
+    df = _pick_allowed_ids(base_df, tuple(keep_ids))
+
+    if "anomaly_type" in df.columns:
+        normal_rows = df["anomaly_type"].eq("normal")
+        anom_rows = df["anomaly_type"].isin(desired_anomalies)
+        df = df[normal_rows | anom_rows].copy()
+
+    if purpose == "inference":
+        df = _soften_faults(df, rng)
+
+    df = _add_noise_and_missingness(df, cfg, rng)
+    df = df.sort_values("Timestamp").reset_index(drop=True)
+
+    if not include_labels:
+        df = df.drop(columns=[c for c in LABEL_COLS if c in df.columns])
+
+    return df
+
+
 def generate_dataset(
     n_chargers: int,
     sessions_per_charger: int,
@@ -199,7 +238,6 @@ def generate_dataset(
     if anomaly_rate is None:
         anomaly_rate = cfg.anomaly_rate
 
-    # Generate a labeled base dataset, then split/filter it.
     base_df = base.generate_dataset(
         n_chargers=n_chargers,
         sessions_per_charger=sessions_per_charger,
@@ -209,73 +247,78 @@ def generate_dataset(
         include_labels=True,
     )
 
-    # Charger-ID holdout: training and inference use disjoint charger IDs.
     available_ids = list(dict.fromkeys(base_df["ChargePointId"].tolist()))
-    if len(available_ids) >= 2:
-        if purpose == "train":
-            keep_ids = available_ids[: max(1, len(available_ids) - 1)]
-        else:
-            keep_ids = available_ids[max(1, len(available_ids) - 1):]
-            if not keep_ids:
-                keep_ids = [available_ids[-1]]
-    else:
-        keep_ids = available_ids
+    train_ids, inference_ids = _split_charger_ids(available_ids, seed=int(cfg.seed if seed is None else seed))
+    keep_ids = train_ids if purpose == "train" else inference_ids
+    if not keep_ids:
+        keep_ids = available_ids[:1]
 
-    df = _pick_allowed_ids(base_df, tuple(keep_ids))
-
-    # For the benchmark, the training split uses easy types, the inference split
-    # uses held-out types. If the caller explicitly provides anomaly types, we
-    # still respect them by filtering to the requested purpose-specific subset.
-    if purpose == "train":
-        desired = set(TRAIN_CONFIG.anomaly_types)
-    else:
-        desired = set(INFERENCE_CONFIG.anomaly_types)
-
-    if "anomaly_type" in df.columns:
-        normal_rows = df["anomaly_type"].eq("normal")
-        anom_rows = df["anomaly_type"].isin(desired)
-        df = df[normal_rows | anom_rows].copy()
-
-    # Make the inference split harder: subtle faults + noise + missingness.
-    if purpose == "inference":
-        df = _soften_faults(df, rng)
-
-    df = _add_noise_and_missingness(df, cfg, rng)
-    df = df.sort_values("Timestamp").reset_index(drop=True)
-
-    if not include_labels:
-        df = df.drop(columns=[c for c in LABEL_COLS if c in df.columns])
-
-    return df
+    desired = set(TRAIN_CONFIG.anomaly_types if purpose == "train" else INFERENCE_CONFIG.anomaly_types)
+    return _build_split_from_base(
+        base_df=base_df,
+        cfg=cfg,
+        purpose=purpose,
+        keep_ids=keep_ids,
+        desired_anomalies=desired,
+        rng=rng,
+        include_labels=include_labels,
+    )
 
 
 def generate_benchmark_pair(
     n_chargers: int,
     sessions_per_charger: int,
     seed: int = 42,
+    active_anomalies: list | None = None,
+    anomaly_rate: float | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     """Return labeled training and unlabeled inference datasets."""
 
-    train_df = generate_dataset(
+    if anomaly_rate is None:
+        anomaly_rate = TRAIN_CONFIG.anomaly_rate
+
+    requested_anomalies = _normalize_anomalies(active_anomalies)
+    if not requested_anomalies:
+        requested_anomalies = VALID_ANOMALIES
+
+    base_df = base.generate_dataset(
         n_chargers=n_chargers,
         sessions_per_charger=sessions_per_charger,
+        active_anomalies=requested_anomalies,
+        anomaly_rate=anomaly_rate,
         seed=seed,
         include_labels=True,
-        purpose="train",
     )
-    inference_df = generate_dataset(
-        n_chargers=n_chargers,
-        sessions_per_charger=sessions_per_charger,
-        seed=seed + 1,
-        include_labels=False,
+
+    available_ids = list(dict.fromkeys(base_df["ChargePointId"].tolist()))
+    train_ids, inference_ids = _split_charger_ids(available_ids, seed=seed)
+
+    train_df = _build_split_from_base(
+        base_df=base_df,
+        cfg=TRAIN_CONFIG,
+        purpose="train",
+        keep_ids=train_ids or available_ids[:1],
+        desired_anomalies=set(TRAIN_CONFIG.anomaly_types),
+        rng=np.random.default_rng(seed),
+        include_labels=True,
+    )
+    inference_df = _build_split_from_base(
+        base_df=base_df,
+        cfg=INFERENCE_CONFIG,
         purpose="inference",
+        keep_ids=inference_ids or available_ids[-1:],
+        desired_anomalies=set(INFERENCE_CONFIG.anomaly_types),
+        rng=np.random.default_rng(seed + 1),
+        include_labels=False,
     )
 
     meta = {
-        "train_chargers": list(TRAIN_CONFIG.charger_ids),
-        "inference_chargers": list(INFERENCE_CONFIG.charger_ids),
+        "train_chargers": sorted(train_df["ChargePointId"].dropna().unique().tolist()),
+        "inference_chargers": sorted(inference_df["ChargePointId"].dropna().unique().tolist()),
         "train_anomalies": list(TRAIN_CONFIG.anomaly_types),
         "inference_anomalies": list(INFERENCE_CONFIG.anomaly_types),
+        "requested_anomalies": requested_anomalies,
+        "requested_anomaly_rate": anomaly_rate,
         "train_noise": {
             "missing_rate": TRAIN_CONFIG.missing_rate,
             "voltage_noise_std": TRAIN_CONFIG.voltage_noise_std,
