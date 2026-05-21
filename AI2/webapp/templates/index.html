@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Lightning Anomaly</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <style>
+      :root {
+        --bg: #0a0c10;
+        --surface: #111318;
+        --card: #161b24;
+        --border: #1f2733;
+        --accent: #00d4aa;
+        --accent2: #ff6b35;
+        --warn: #f0a500;
+        --text: #e2e8f0;
+        --muted: #64748b;
+        --mono: 'Space Mono', monospace;
+        --sans: 'DM Sans', sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+        background-size: 40px 40px;
+        opacity: .35;
+      }
+      header {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 36px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(10, 12, 16, .92);
+        backdrop-filter: blur(12px);
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .logo-icon img {
+        width: 34px;
+        height: 34px;
+        object-fit: contain;
+        display: block;
+      }
+      .logo h1 {
+        font-family: var(--mono);
+        font-size: 14px;
+        letter-spacing: .1em;
+        color: var(--accent);
+      }
+      .logo span {
+        font-size: 11px;
+        color: var(--muted);
+        display: block;
+        margin-top: 1px;
+      }
+      .status-pill {
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 5px 14px;
+        border-radius: 100px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        background: var(--surface);
+        transition: all .3s;
+      }
+      .status-pill.running {
+        border-color: var(--accent);
+        color: var(--accent);
+        animation: pulse 1.4s ease-in-out infinite;
+      }
+      .status-pill.done {
+        border-color: #4ade80;
+        color: #4ade80;
+      }
+      .status-pill.error {
+        border-color: var(--accent2);
+        color: var(--accent2);
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .4; }
+      }
+      main {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        height: calc(100vh - 57px);
+      }
+
+      /* Sidebar */
+      aside {
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        padding: 24px 20px;
+        background: rgba(17, 19, 24, .75);
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+      .section-title {
+        font-family: var(--mono);
+        font-size: 9px;
+        letter-spacing: .18em;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: 10px;
+      }
+      .field label {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .field input[type=number] {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 13px;
+        padding: 8px 11px;
+        outline: none;
+        transition: border .2s;
+        width: 100%;
+      }
+      .field input:focus {
+        border-color: var(--accent);
+      }
+      .field .hint {
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .range-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      input[type=range] {
+        flex: 1;
+        height: 3px;
+        border-radius: 3px;
+        background: var(--border);
+        outline: none;
+        cursor: pointer;
+      }
+      input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: var(--accent);
+        border: 2px solid var(--bg);
+        cursor: pointer;
+      }
+      .range-val {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--accent);
+        min-width: 34px;
+        text-align: right;
+      }
+      .anomaly-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+      }
+      .anom-check {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        font-size: 11px;
+        color: var(--muted);
+        transition: all .15s;
+        user-select: none;
+      }
+      .anom-check:hover {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+      .anom-check input {
+        display: none;
+      }
+      .anom-check .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        border: 1px solid var(--muted);
+        flex-shrink: 0;
+        transition: all .15s;
+      }
+      .anom-check input:checked ~ .dot {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .anom-check input:checked ~ span {
+        color: var(--accent);
+      }
+      .all-check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        padding: 8px 11px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--text);
+        font-weight: 500;
+        margin-bottom: 7px;
+        background: var(--surface);
+        transition: all .15s;
+      }
+      .all-check:hover {
+        border-color: var(--accent);
+      }
+      .all-check input {
+        display: none;
+      }
+      .all-check .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 3px;
+        border: 1px solid var(--muted);
+        flex-shrink: 0;
+        transition: all .15s;
+      }
+      .all-check input:checked ~ .dot {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .run-btn {
+        width: 100%;
+        padding: 13px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--accent), #009688);
+        color: #000;
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: opacity .2s, transform .1s;
+      }
+      .run-btn:hover {
+        opacity: .88;
+      }
+      .run-btn:active {
+        transform: scale(.98);
+      }
+      .run-btn:disabled {
+        opacity: .35;
+        cursor: not-allowed;
+      }
+
+      /* Right panel */
+      .right-panel {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border);
+        background: rgba(17, 19, 24, .75);
+        padding: 0 28px;
+        flex-shrink: 0;
+      }
+      .tab {
+        padding: 14px 18px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all .2s;
+        font-family: var(--mono);
+        letter-spacing: .05em;
+      }
+      .tab:hover {
+        color: var(--text);
+      }
+      .tab.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+      .tab-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px 28px;
+      }
+      .panel {
+        display: none;
+      }
+      .panel.active {
+        display: block;
+      }
+
+      /* Log */
+      .log-box {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 18px;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.75;
+        color: #94a3b8;
+        min-height: 300px;
+        max-height: calc(100vh - 190px);
+        overflow-y: auto;
+        white-space: pre-wrap;
+      }
+      .log-ok {
+        color: var(--accent);
+      }
+      .log-err {
+        color: var(--accent2);
+      }
+      .log-warn {
+        color: var(--warn);
+      }
+
+      /* Cards */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 22px;
+      }
+      .stat-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 18px;
+      }
+      .stat-card .val {
+        font-family: var(--mono);
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .stat-card .val.warn {
+        color: var(--accent2);
+      }
+      .stat-card .val.ok {
+        color: #4ade80;
+      }
+      .stat-card .lbl {
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 4px;
+        letter-spacing: .05em;
+      }
+
+      /* Charts */
+      .chart-wrap {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 18px;
+        margin-bottom: 20px;
+      }
+      .chart-title {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--muted);
+        margin-bottom: 14px;
+        letter-spacing: .1em;
+      }
+      .histogram-wrap {
+        width: 100%;
+        height: 130px;
+        position: relative;
+      }
+      .histogram-wrap canvas {
+        position: absolute;
+        inset: 0;
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      /* Confusion matrix */
+      .cm-grid {
+        display: grid;
+        grid-template-columns: auto 1fr 1fr;
+        gap: 3px;
+        align-items: center;
+        justify-items: center;
+        max-width: 360px;
+      }
+      .cm-header {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--muted);
+        letter-spacing: .08em;
+        padding: 4px 8px;
+      }
+      .cm-row-label {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--muted);
+        letter-spacing: .08em;
+        padding: 4px 8px;
+        text-align: right;
+        width: 100%;
+      }
+      .cm-cell {
+        width: 100%;
+        padding: 18px 12px;
+        border-radius: 8px;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 22px;
+        font-weight: 700;
+        border: 1px solid var(--border);
+      }
+      .cm-cell.tp {
+        background: rgba(0, 212, 170, .12);
+        color: var(--accent);
+        border-color: rgba(0, 212, 170, .3);
+      }
+      .cm-cell.tn {
+        background: rgba(74, 222, 128, .1);
+        color: #4ade80;
+        border-color: rgba(74, 222, 128, .25);
+      }
+      .cm-cell.fp {
+        background: rgba(255, 107, 53, .1);
+        color: var(--accent2);
+        border-color: rgba(255, 107, 53, .25);
+      }
+      .cm-cell.fn {
+        background: rgba(240, 165, 0, .1);
+        color: var(--warn);
+        border-color: rgba(240, 165, 0, .25);
+      }
+      .cm-cell .cm-lbl {
+        font-size: 9px;
+        font-family: var(--mono);
+        opacity: .6;
+        display: block;
+        margin-top: 3px;
+        font-weight: 400;
+      }
+      .metrics-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-top: 14px;
+        max-width: 360px;
+      }
+      .metric-bar-wrap {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 14px;
+      }
+      .metric-bar-lbl {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--muted);
+        letter-spacing: .1em;
+        margin-bottom: 6px;
+      }
+      .metric-bar-val {
+        font-family: var(--mono);
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .metric-bar-track {
+        margin-top: 6px;
+        background: var(--border);
+        border-radius: 100px;
+        height: 3px;
+      }
+      .metric-bar-fill {
+        height: 100%;
+        border-radius: 100px;
+        background: var(--accent);
+        transition: width .8s ease;
+      }
+
+      /* Charger bars */
+      .charger-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .charger-bar-row {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+      }
+      .charger-label {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--muted);
+        min-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .charger-track {
+        flex: 1;
+        background: var(--border);
+        border-radius: 100px;
+        height: 7px;
+        overflow: hidden;
+      }
+      .charger-fill {
+        height: 100%;
+        border-radius: 100px;
+        background: linear-gradient(90deg, var(--accent2), var(--warn));
+        transition: width .9s ease;
+      }
+      .charger-count {
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--text);
+        min-width: 32px;
+        text-align: right;
+      }
+
+      /* Anomaly list */
+      .anom-list {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .anom-item {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 15px;
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+      }
+      .anom-badge {
+        font-family: var(--mono);
+        font-size: 9px;
+        padding: 3px 8px;
+        border-radius: 100px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .anom-badge.voltage {
+        background: rgba(240, 165, 0, .12);
+        color: var(--warn);
+        border: 1px solid rgba(240, 165, 0, .3);
+      }
+      .anom-badge.current {
+        background: rgba(0, 212, 170, .12);
+        color: var(--accent);
+        border: 1px solid rgba(0, 212, 170, .3);
+      }
+      .anom-badge.power {
+        background: rgba(255, 107, 53, .12);
+        color: var(--accent2);
+        border: 1px solid rgba(255, 107, 53, .3);
+      }
+      .anom-content .charger-id {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--text);
+        font-weight: 700;
+      }
+      .anom-content .anom-vals {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 3px;
+      }
+      .cluster-tag {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 9px;
+        flex-shrink: 0;
+        padding: 2px 8px;
+        border-radius: 100px;
+        background: var(--surface);
+        color: var(--muted);
+        border: 1px solid var(--border);
+      }
+      .empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 55%;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .empty .icon {
+        font-size: 38px;
+        opacity: .28;
+      }
+      ::-webkit-scrollbar {
+        width: 4px;
+        height: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <div class="logo">
+        <div class="logo-icon">
+          <img src="{{ url_for('static', filename='faisca_mcqueen.jpg') }}" alt="Logo" onerror="this.style.display='none'"/>
+        </div>
+        <div>
+          <h1>LIGHTNING ANOMALY</h1>
+          <span>Charger Telemetry Intelligence Platform</span>
+        </div>
+      </div>
+      <div class="status-pill" id="statusPill">IDLE</div>
+    </header>
+
+    <main>
+      <aside>
+        <div>
+          <div class="section-title">Dataset Config</div>
+          <div class="field">
+            <label>Chargers</label>
+            <input type="number" id="chargers" value="3" min="1" max="10"/>
+            <span class="hint">Number of EV charger stations</span>
+          </div>
+          <div class="field">
+            <label>Sessions per charger</label>
+            <input type="number" id="sessions" value="60" min="10" max="300"/>
+          </div>
+          <div class="field">
+            <label>Anomaly injection rate</label>
+            <div class="range-wrap">
+              <input type="range" id="anomalyRate" min="0" max="0.5" step="0.01" value="0.05" oninput="$('rateVal').textContent=Math.round(this.value*100)+'%'"/>
+              <span class="range-val" id="rateVal">5%</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">Anomaly Types to Inject</div>
+          <label class="all-check">
+            <input type="checkbox" id="allAnomalies" onchange="document.querySelectorAll('.anom-type').forEach(c=>c.checked=this.checked)"/>
+            <div class="dot"></div>
+            <span>All anomaly types</span>
+          </label>
+          <div class="anomaly-grid">
+            <label class="anom-check"><input type="checkbox" class="anom-type" value="voltage_out_of_range"/><div class="dot"></div><span>Voltage OOR</span></label>
+            <label class="anom-check"><input type="checkbox" class="anom-type" value="phase_voltage_diff"/><div class="dot"></div><span>Phase V diff</span></label>
+            <label class="anom-check"><input type="checkbox" class="anom-type" value="current_zero_phase"/><div class="dot"></div><span>Zero phase</span></label>
+            <label class="anom-check"><input type="checkbox" class="anom-type" value="current_imbalance"/><div class="dot"></div><span>I imbalance</span></label>
+            <label class="anom-check"><input type="checkbox" class="anom-type" value="power_offered_diff"/><div class="dot"></div><span>Power diff</span></label>
+            <label class="anom-check"><input type="checkbox" class="anom-type" value="power_consistency"/><div class="dot"></div><span>P consistency</span></label>
+          </div>
+        </div>
+
+        <button class="run-btn" id="runBtn" onclick="runPipeline()">
+          <span>▶</span> RUN PIPELINE
+        </button>
+      </aside>
+
+      <div class="right-panel">
+        <div class="tabs">
+          <div class="tab active" onclick="showTab('log')">Console Log</div>
+          <div class="tab" onclick="showTab('results')">Results</div>
+          <div class="tab" onclick="showTab('anomalies')">Anomalies</div>
+        </div>
+        <div class="tab-content">
+
+          <div class="panel active" id="panel-log">
+            <div class="log-box" id="logBox">Run the pipeline to see output here...</div>
+          </div>
+
+          <div class="panel" id="panel-results">
+            <div id="resultsContent">
+              <div class="empty"><div class="icon">📊</div><span>Run the pipeline to see results</span></div>
+            </div>
+          </div>
+
+          <div class="panel" id="panel-anomalies">
+            <div id="anomaliesContent">
+              <div class="empty"><div class="icon">🔍</div><span>Run the pipeline to see anomaly details</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const $ = id => document.getElementById(id);
+
+      function showTab(name) {
+        const tabs   = ['log','results','anomalies'];
+        document.querySelectorAll('.tab').forEach((t,i)   => t.classList.toggle('active', tabs[i]===name));
+        document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', tabs[i]===name));
+        // redraw histogram if switching to results with data ready
+        if (name==='results' && window._lastScores) {
+          requestAnimationFrame(()=>drawHistogram('scoreCanvas', window._lastScores));
+        }
+      }
+
+      function setStatus(s) {
+        const pill = $('statusPill');
+        pill.className = 'status-pill '+s.toLowerCase();
+        pill.textContent = s.toUpperCase();
+      }
+
+      function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+      function renderLog(lines) {
+        const box = $('logBox');
+        box.innerHTML = (lines||[]).map(l=>{
+          if (/^✅|^🔧|^🔍/.test(l)) return `<span class="log-ok">${esc(l)}</span>`;
+          if (/^❌/.test(l))          return `<span class="log-err">${esc(l)}</span>`;
+          if (/^⚠️/.test(l))         return `<span class="log-warn">${esc(l)}</span>`;
+          return esc(l);
+        }).join('\n') || 'Waiting for output...';
+        box.scrollTop = box.scrollHeight;
+      }
+
+      // Histogram
+      function drawHistogram(canvasId, scores) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas || !scores || !scores.length) return;
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const W = rect.width  || canvas.parentElement.offsetWidth  || 600;
+        const H = rect.height || canvas.parentElement.offsetHeight || 130;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width  = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width  = W + 'px';
+        canvas.style.height = H + 'px';
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        const BINS = 40;
+        const mn = Math.min(...scores), mx = Math.max(...scores);
+        const step = (mx - mn) / BINS || 1;
+        const counts = new Array(BINS).fill(0);
+        scores.forEach(s => { const i = Math.min(BINS-1, Math.floor((s-mn)/step)); counts[i]++; });
+        const maxC = Math.max(...counts, 1);
+
+        const PAD_B = 18, bw = W / BINS;
+        ctx.clearRect(0, 0, W, H);
+        counts.forEach((c, i) => {
+          const x = i * bw;
+          const h = ((c / maxC) * (H - PAD_B - 4));
+          const pct = i / BINS;
+          ctx.fillStyle = pct < 0.28 ? '#ff6b35' : pct < 0.48 ? '#f0a500' : '#00d4aa';
+          ctx.globalAlpha = 0.82;
+          ctx.beginPath();
+          ctx.roundRect(x+1, H-PAD_B-h, Math.max(bw-2,1), h, 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#64748b';
+        ctx.font = `10px 'Space Mono',monospace`;
+        ctx.textAlign = 'left';  ctx.fillText(mn.toFixed(3), 2, H-4);
+        ctx.textAlign = 'right'; ctx.fillText(mx.toFixed(3), W-2, H-4);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#334155';
+        ctx.fillText('← more anomalous     normal →', W/2, H-4);
+      }
+
+      // Confusion matrix
+      function renderConfusionMatrix(cm, metrics) {
+        const pct = v => (v*100).toFixed(1)+'%';
+        return `
+          <div style="display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start">
+            <div>
+              <div class="chart-title" style="margin-bottom:10px">CONFUSION MATRIX</div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:6px;padding-left:80px;letter-spacing:.08em">
+                PRED: NORMAL &nbsp;&nbsp;&nbsp; PRED: ANOMALY
+              </div>
+              <div class="cm-grid">
+                <div></div>
+                <div class="cm-header">PRED NORMAL</div>
+                <div class="cm-header">PRED ANOMALY</div>
+                <div class="cm-row-label">ACTUAL NORMAL</div>
+                <div class="cm-cell tn">${cm.tn}<span class="cm-lbl">TRUE NEG</span></div>
+                <div class="cm-cell fp">${cm.fp}<span class="cm-lbl">FALSE POS</span></div>
+                <div class="cm-row-label">ACTUAL ANOMALY</div>
+                <div class="cm-cell fn">${cm.fn}<span class="cm-lbl">FALSE NEG</span></div>
+                <div class="cm-cell tp">${cm.tp}<span class="cm-lbl">TRUE POS</span></div>
+              </div>
+            </div>
+
+            <div style="flex:1;min-width:220px">
+              <div class="chart-title" style="margin-bottom:10px">METRICS</div>
+              <div class="metrics-row" style="max-width:100%">
+                ${[['ACCURACY',metrics.accuracy],['PRECISION',metrics.precision],['RECALL',metrics.recall],['F1',metrics.f1]].map(([lbl,v])=>`
+                <div class="metric-bar-wrap">
+                  <div class="metric-bar-lbl">${lbl}</div>
+                  <div class="metric-bar-val">${pct(v)}</div>
+                  <div class="metric-bar-track"><div class="metric-bar-fill" style="width:${v*100}%"></div></div>
+                </div>`).join('')}
+              </div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:14px;line-height:1.9">
+                <div>Precision = TP/(TP+FP) — of anomaly predictions, how many were real</div>
+                <div>Recall    = TP/(TP+FN) — of real anomalies, how many were caught</div>
+                <div>F1        = harmonic mean of precision &amp; recall</div>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      // Results panel
+      function renderResults(result) {
+        if (!result || result.error) {
+          $('resultsContent').innerHTML = `<div class="empty"><div class="icon">⚠️</div><span>${esc(result?.error||'No data')}</span></div>`;
+          return;
+        }
+
+        const pct    = result.n_test > 0 ? (result.n_anomalies/result.n_test*100).toFixed(1) : 0;
+        const counts = result.charger_anomaly_counts || {};
+        const maxC   = Math.max(...Object.values(counts), 1);
+        const m      = result.metrics || {};
+        const cm     = result.confusion_matrix || {tp:0,tn:0,fp:0,fn:0};
+
+        window._lastScores = result.score_distribution || [];
+
+        $('resultsContent').innerHTML = `
+          <div class="stats-grid">
+            <div class="stat-card"><div class="val">${(result.n_test||0).toLocaleString()}</div><div class="lbl">TEST ROWS</div></div>
+            <div class="stat-card"><div class="val warn">${(result.n_anomalies||0).toLocaleString()}</div><div class="lbl">ANOMALIES DETECTED</div></div>
+            <div class="stat-card"><div class="val">${pct}%</div><div class="lbl">DETECTION RATE</div></div>
+            <div class="stat-card"><div class="val ok">${m.f1!==undefined?(m.f1*100).toFixed(1)+'%':'—'}</div><div class="lbl">F1 SCORE</div></div>
+          </div>
+
+          <div class="chart-wrap">
+            <div class="chart-title">ISOLATION FOREST SCORE DISTRIBUTION — scores below threshold (left) = flagged as anomalies</div>
+            <div class="histogram-wrap" id="histWrap">
+              <canvas id="scoreCanvas"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-wrap">
+            ${renderConfusionMatrix(cm, m)}
+          </div>
+
+          <div class="chart-wrap">
+            <div class="chart-title">ANOMALY COUNT BY CHARGER</div>
+            <div class="charger-bars">
+              ${Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([id,cnt])=>`
+              <div class="charger-bar-row">
+                <div class="charger-label" title="${esc(id)}">${esc(id)}</div>
+                <div class="charger-track"><div class="charger-fill" style="width:${cnt/maxC*100}%"></div></div>
+                <div class="charger-count">${cnt}</div>
+              </div>`).join('')}
+            </div>
+          </div>
+        `;
+
+        // Draw histogram after DOM is painted
+        requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
+          drawHistogram('scoreCanvas', window._lastScores);
+        })});
+      }
+
+      // Anomalies panel 
+      function renderAnomalies(result) {
+        if (!result || result.error) {
+          $('anomaliesContent').innerHTML = `<div class="empty"><div class="icon">⚠️</div><span>${esc(result?.error||'No data')}</span></div>`;
+          return;
+        }
+        const descs = result.anomaly_descriptions || [];
+        if (!descs.length) {
+          $('anomaliesContent').innerHTML = `<div class="empty"><div class="icon">✅</div><span>No rule-based anomalies in flagged rows</span></div>`;
+          return;
+        }
+        function badgeClass(t) {
+          t = t.toLowerCase();
+          if (t.includes('voltage')||t.includes('phase')) return 'voltage';
+          if (t.includes('current')) return 'current';
+          return 'power';
+        }
+        function formatVals(d) {
+          const skip = ['ChargePointId','AnomalyType','Cluster'];
+          return Object.entries(d).filter(([k,v])=>!skip.includes(k)&&v!==0&&v!==null)
+            .map(([k,v])=>`${k}: <b>${typeof v==='number'?v.toFixed(2):v}</b>`).join(' · ');
+        }
+        const chargerCount = new Set(descs.map(d=>d.ChargePointId)).size;
+        $('anomaliesContent').innerHTML = `
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:14px;letter-spacing:.08em">
+            ${descs.length} RULE VIOLATIONS ACROSS ${chargerCount} CHARGER(S)
+          </div>
+          <div class="anom-list">
+            ${descs.map(d=>{
+              const bc = badgeClass(d.AnomalyType);
+              const vals = formatVals(d);
+              return `
+              <div class="anom-item">
+                <span class="anom-badge ${bc}">${bc.toUpperCase()}</span>
+                <div class="anom-content">
+                  <div class="charger-id">${esc(d.ChargePointId)}</div>
+                  <div class="anom-vals">${esc(d.AnomalyType)}</div>
+                  ${vals?`<div class="anom-vals" style="margin-top:4px">${vals}</div>`:''}
+                </div>
+                ${d.Cluster!==undefined?`<span class="cluster-tag">cluster ${d.Cluster}</span>`:''}
+              </div>`;
+            }).join('')}
+          </div>`;
+      }
+
+      // Pipeline runner
+      let pollInterval = null;
+
+      async function runPipeline() {
+        const anomalies = [...document.querySelectorAll('.anom-type:checked')].map(c=>c.value);
+        if ($('allAnomalies').checked) anomalies.push('all');
+
+        const params = {
+          chargers:     parseInt($('chargers').value)  || 3,
+          sessions:     parseInt($('sessions').value)  || 60,
+          anomaly_rate: parseFloat($('anomalyRate').value) || 0.05,
+          anomalies,
+        };
+
+        $('runBtn').disabled = true;
+        $('logBox').textContent = 'Starting pipeline...';
+        setStatus('running');
+        showTab('log');
+        window._lastScores = null;
+
+        try {
+          const res = await fetch('/api/run', {
+            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(params)
+          });
+          if (!res.ok) throw new Error(`Server error ${res.status}`);
+          const {job_id} = await res.json();
+
+          clearInterval(pollInterval);
+          pollInterval = setInterval(async () => {
+            try {
+              const r   = await fetch('/api/status/'+job_id);
+              if (!r.ok) throw new Error(`Status ${r.status}`);
+              const job = await r.json();
+              renderLog(job.log);
+
+              if (job.status === 'done' || job.status === 'error') {
+                clearInterval(pollInterval);
+                setStatus(job.status);
+                $('runBtn').disabled = false;
+                renderResults(job.result || {});
+                renderAnomalies(job.result || {});
+              }
+            } catch(err) {
+              clearInterval(pollInterval);
+              setStatus('error');
+              $('runBtn').disabled = false;
+              renderLog([`❌ Polling error: ${err.message}`]);
+            }
+          }, 800);
+
+        } catch(err) {
+          setStatus('error');
+          $('runBtn').disabled = false;
+          $('logBox').textContent = `❌ ${err.message}`;
+        }
+      }
+
+      // Redraw histogram on resize
+      window.addEventListener('resize', ()=>{
+        if (window._lastScores && $('panel-results').classList.contains('active')) {
+          requestAnimationFrame(()=>drawHistogram('scoreCanvas', window._lastScores));
+        }
+      });
+    </script>
+  </body>
+</html>
