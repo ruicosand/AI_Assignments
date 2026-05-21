@@ -1,37 +1,3 @@
-"""
-Synthetic EV Charger Data Generator
-=====================================
-Generates realistic EV charger telemetry data that mirrors the structure of
-all_chargers_pivoted.xlsx, with optional injection of the same anomaly types
-detected by models.py.
-
-Usage examples:
-  # Clean data only
-  python generate_synthetic_charger_data.py
-
-  # Inject all anomaly types
-  python generate_synthetic_charger_data.py --anomalies all
-
-  # Inject specific anomalies
-  python generate_synthetic_charger_data.py --anomalies voltage_out_of_range phase_imbalance
-
-  # Full control
-  python generate_synthetic_charger_data.py \
-      --chargers 3 --sessions-per-charger 50 \
-      --anomalies voltage_out_of_range current_zero_phase power_offered_diff \
-      --anomaly-rate 0.05 \
-      --output synthetic_data.xlsx
-
-Available anomaly types:
-  voltage_out_of_range  — Voltage on L1/L2/L3 drifts outside 220–240 V
-  phase_voltage_diff    — Voltage difference between phases exceeds 10 V
-  current_zero_phase    — One phase reads 0 A while the other two carry current
-  current_imbalance     — |I_L1 - I_L2| or similar exceeds 2 A across phases
-  power_offered_diff    — |Power.Offered - Power.Active.Import| exceeds 2 kW
-  power_consistency     — Measured V×I power deviates from Power.Active.Import by > 1 kW
-  all                   — Enable every anomaly type above
-"""
-
 import argparse
 import uuid
 import random
@@ -39,9 +5,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 
-# ---------------------------------------------------------------------------
-# Constants derived from the real dataset
-# ---------------------------------------------------------------------------
+
 
 CHARGER_TEMPLATES = [
     {"ChargePointId": "/circutor",   "has_voltage": False, "connectors": [1, 2]},
@@ -52,7 +16,6 @@ CHARGER_TEMPLATES = [
 STOP_REASONS = ["Remote", "EVDisconnected", "Local", "PowerLoss", "Other"]
 STOP_REASON_WEIGHTS = [0.40, 0.35, 0.15, 0.05, 0.05]
 
-# Normal operating ranges (from real data statistics)
 NORMAL = {
     "voltage_mean":   233.0,
     "voltage_std":    3.0,
@@ -62,28 +25,23 @@ NORMAL = {
     "current_std":    2.5,
     "current_min":    0.0,
     "current_max":    16.5,
-    "power_offered_mean": 7.6,   # kW — fixed per session
+    "power_offered_mean": 7.6,   
     "power_offered_std":  3.5,
-    "consumption_mean":  22.0,   # kWh — per session
+    "consumption_mean":  22.0,   
     "consumption_std":   11.7,
-    "duration_mean":    203.0,   # minutes
+    "duration_mean":    203.0,  
     "duration_std":      82.0,
     "energy_register_max": 19.34,
 }
 
-# How many telemetry rows per session (roughly every ~10-60 s)
 ROWS_PER_SESSION_MEAN = 25
 ROWS_PER_SESSION_STD  = 10
 
 DATE_START = datetime(2026, 1, 2)
 DATE_END   = datetime(2026, 4, 30)
 
-# ---------------------------------------------------------------------------
-# Anomaly injection helpers
-# ---------------------------------------------------------------------------
 
 def inject_voltage_out_of_range(row: dict, rng: np.random.Generator) -> dict:
-    """Push one or more voltage phases outside the 220–240 V standard band."""
     phase = rng.choice(["Voltage_L1", "Voltage_L2", "Voltage_L3"])
     direction = rng.choice([-1, 1])
     # Either drop below 220 or push above 240
@@ -95,7 +53,6 @@ def inject_voltage_out_of_range(row: dict, rng: np.random.Generator) -> dict:
 
 
 def inject_phase_voltage_diff(row: dict, rng: np.random.Generator) -> dict:
-    """Create a >10 V gap between two voltage phases."""
     base = float(rng.uniform(228, 235))
     offset = float(rng.uniform(11, 20))
     phase_a, phase_b = rng.choice(
@@ -107,7 +64,6 @@ def inject_phase_voltage_diff(row: dict, rng: np.random.Generator) -> dict:
 
 
 def inject_current_zero_phase(row: dict, rng: np.random.Generator) -> dict:
-    """Set one phase to 0 A while the other two carry normal current."""
     dead_phase = rng.choice(
         ["Current.Import_L1", "Current.Import_L2", "Current.Import_L3"]
     )
@@ -120,7 +76,6 @@ def inject_current_zero_phase(row: dict, rng: np.random.Generator) -> dict:
 
 
 def inject_current_imbalance(row: dict, rng: np.random.Generator) -> dict:
-    """Force a >2 A gap between two current phases."""
     base_current = float(rng.uniform(8, 14))
     imbalance    = float(rng.uniform(3, 8))
     phase_a, phase_b = rng.choice(
@@ -133,14 +88,12 @@ def inject_current_imbalance(row: dict, rng: np.random.Generator) -> dict:
 
 
 def inject_power_offered_diff(row: dict, rng: np.random.Generator) -> dict:
-    """|Power.Offered - Power.Active.Import| > 2 kW."""
     gap = float(rng.uniform(2.1, 6.0))
     row["Power.Active.Import"] = max(0.0, row.get("Power.Offered", 7.5) - gap)
     return row
 
 
 def inject_power_consistency(row: dict, rng: np.random.Generator) -> dict:
-    """Make V×I/1000 deviate from Power.Active.Import by more than 1 kW."""
     # Inflate reported active import well above measured power
     reported = row.get("Power.Active.Import", 5.0)
     row["Power.Active.Import"] = reported + float(rng.uniform(1.1, 4.0))
@@ -156,10 +109,6 @@ ANOMALY_INJECTORS = {
     "power_consistency":     inject_power_consistency,
 }
 
-# ---------------------------------------------------------------------------
-# Row / session generators
-# ---------------------------------------------------------------------------
-
 def normal_voltage(rng: np.random.Generator) -> float:
     return float(np.clip(
         rng.normal(NORMAL["voltage_mean"], NORMAL["voltage_std"]),
@@ -168,7 +117,6 @@ def normal_voltage(rng: np.random.Generator) -> float:
 
 
 def normal_current(rng: np.random.Generator, power_offered: float) -> float:
-    """Current is loosely derived from power offered (P ≈ V×I×3 / 1000)."""
     expected = (power_offered * 1000) / (3 * NORMAL["voltage_mean"])
     return float(np.clip(
         rng.normal(expected, 0.3),
@@ -188,8 +136,8 @@ def build_telemetry_row(
     consumption: float,
     duration_min: int,
     rng: np.random.Generator,
+    include_labels: bool,
 ) -> dict:
-    """Build one telemetry reading row."""
     has_v = charger["has_voltage"]
 
     current_l1 = normal_current(rng, power_offered)
@@ -226,6 +174,7 @@ def build_telemetry_row(
         "Voltage_L1":                  round(v_l1, 1) if has_v else np.nan,
         "Voltage_L2":                  round(v_l2, 1) if has_v else np.nan,
         "Voltage_L3":                  round(v_l3, 1) if has_v else np.nan,
+        **({"is_anomaly": 0, "anomaly_type": "normal"} if include_labels else {}),
     }
 
 
@@ -235,8 +184,8 @@ def generate_session(
     active_anomalies: list,
     anomaly_rate: float,
     rng: np.random.Generator,
+    include_labels: bool,
 ) -> list[dict]:
-    """Generate all telemetry rows for a single charging session."""
     connector_id  = random.choice(charger["connectors"])
     session_id    = str(uuid.uuid4())
     duration_min  = max(1, int(rng.normal(NORMAL["duration_mean"], NORMAL["duration_std"])))
@@ -262,20 +211,21 @@ def generate_session(
             power_offered, energy_so_far,
             session_start, session_end,
             consumption, duration_min, rng,
+            include_labels,
         )
 
         # Optionally inject an anomaly into this row
         if active_anomalies and rng.random() < anomaly_rate:
-            injector = ANOMALY_INJECTORS[rng.choice(active_anomalies)]
+            anomaly_name = rng.choice(active_anomalies)
+            injector = ANOMALY_INJECTORS[anomaly_name]
             row = injector(row, rng)
+            if include_labels:
+                row["is_anomaly"] = 1
+                row["anomaly_type"] = anomaly_name
 
         rows.append(row)
 
     return rows
-
-# ---------------------------------------------------------------------------
-# Main generator
-# ---------------------------------------------------------------------------
 
 def generate_dataset(
     n_chargers: int,
@@ -283,11 +233,12 @@ def generate_dataset(
     active_anomalies: list,
     anomaly_rate: float,
     seed: int,
+    include_labels: bool = False,
 ) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     random.seed(seed)
 
-    # Use real charger templates; cycle if n_chargers > 3
+    # cycle if n_chargers > 3
     chargers = [CHARGER_TEMPLATES[i % len(CHARGER_TEMPLATES)] for i in range(n_chargers)]
 
     total_span_days = (DATE_END - DATE_START).days
@@ -308,16 +259,13 @@ def generate_dataset(
             rows = generate_session(
                 charger, session_start,
                 active_anomalies, anomaly_rate, rng,
+                include_labels,
             )
             all_rows.extend(rows)
 
     df = pd.DataFrame(all_rows)
     df = df.sort_values("Timestamp").reset_index(drop=True)
     return df
-
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
 
 VALID_ANOMALIES = list(ANOMALY_INJECTORS.keys())
 
@@ -366,7 +314,6 @@ def parse_args():
 def main():
     args = parse_args()
 
-    # Resolve anomaly list
     if "all" in args.anomalies:
         active_anomalies = VALID_ANOMALIES
     else:

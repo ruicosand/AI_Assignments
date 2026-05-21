@@ -38,6 +38,7 @@ test_data['AnomScore'] = anomaly_score
 test_data = test_data.sort_values('AnomScore')
 
 
+
 test_data_anomalies = test_data[test_data['isAnomaly'] == -1]
 
 chargers = test_data_anomalies.groupby('ChargePointId').count().sort_values('isAnomaly', ascending=False)

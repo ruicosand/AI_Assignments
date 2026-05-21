@@ -742,10 +742,6 @@
         const tabs   = ['log','results','anomalies'];
         document.querySelectorAll('.tab').forEach((t,i)   => t.classList.toggle('active', tabs[i]===name));
         document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', tabs[i]===name));
-        // redraw histogram if switching to results with data ready
-        if (name==='results' && window._lastScores) {
-          requestAnimationFrame(()=>drawHistogram('scoreCanvas', window._lastScores));
-        }
       }
 
       function setStatus(s) {
@@ -767,48 +763,25 @@
         box.scrollTop = box.scrollHeight;
       }
 
-      // Histogram
-      function drawHistogram(canvasId, scores) {
-        const canvas = document.getElementById(canvasId);
-        if (!canvas || !scores || !scores.length) return;
-        const rect = canvas.parentElement.getBoundingClientRect();
-        const W = rect.width  || canvas.parentElement.offsetWidth  || 600;
-        const H = rect.height || canvas.parentElement.offsetHeight || 130;
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width  = W * dpr;
-        canvas.height = H * dpr;
-        canvas.style.width  = W + 'px';
-        canvas.style.height = H + 'px';
-        const ctx = canvas.getContext('2d');
-        ctx.scale(dpr, dpr);
-
-        const BINS = 40;
-        const mn = Math.min(...scores), mx = Math.max(...scores);
-        const step = (mx - mn) / BINS || 1;
-        const counts = new Array(BINS).fill(0);
-        scores.forEach(s => { const i = Math.min(BINS-1, Math.floor((s-mn)/step)); counts[i]++; });
-        const maxC = Math.max(...counts, 1);
-
-        const PAD_B = 18, bw = W / BINS;
-        ctx.clearRect(0, 0, W, H);
-        counts.forEach((c, i) => {
-          const x = i * bw;
-          const h = ((c / maxC) * (H - PAD_B - 4));
-          const pct = i / BINS;
-          ctx.fillStyle = pct < 0.28 ? '#ff6b35' : pct < 0.48 ? '#f0a500' : '#00d4aa';
-          ctx.globalAlpha = 0.82;
-          ctx.beginPath();
-          ctx.roundRect(x+1, H-PAD_B-h, Math.max(bw-2,1), h, 2);
-          ctx.fill();
-        });
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = '#64748b';
-        ctx.font = `10px 'Space Mono',monospace`;
-        ctx.textAlign = 'left';  ctx.fillText(mn.toFixed(3), 2, H-4);
-        ctx.textAlign = 'right'; ctx.fillText(mx.toFixed(3), W-2, H-4);
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#334155';
-        ctx.fillText('← more anomalous     normal →', W/2, H-4);
+      function renderFeatureImportance(items) {
+        const rows = (items || []).slice(0, 8);
+        if (!rows.length) {
+          return `<div class="empty"><div class="icon">📈</div><span>No feature importance available</span></div>`;
+        }
+        const maxV = Math.max(...rows.map(r => r.importance), 1);
+        return `
+          <div class="chart-title" style="margin-bottom:10px">RANDOM FOREST FEATURE IMPORTANCE</div>
+          <div style="display:flex;flex-direction:column;gap:10px;max-width:100%">
+            ${rows.map(r => `
+              <div style="display:grid;grid-template-columns:180px 1fr 72px;gap:10px;align-items:center;font-family:var(--mono);font-size:11px">
+                <div style="color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.feature)}">${esc(r.feature)}</div>
+                <div style="height:10px;background:var(--border);border-radius:999px;overflow:hidden">
+                  <div style="width:${(r.importance / maxV) * 100}%;height:100%;background:linear-gradient(90deg,var(--accent),#4ade80)"></div>
+                </div>
+                <div style="text-align:right;color:var(--muted)">${(r.importance * 100).toFixed(1)}%</div>
+              </div>
+            `).join('')}
+          </div>`;
       }
 
       // Confusion matrix
@@ -860,31 +833,44 @@
           return;
         }
 
-        const pct    = result.n_test > 0 ? (result.n_anomalies/result.n_test*100).toFixed(1) : 0;
+        const pct    = result.n_inference > 0 ? (result.n_anomalies/result.n_inference*100).toFixed(1) : 0;
         const counts = result.charger_anomaly_counts || {};
         const maxC   = Math.max(...Object.values(counts), 1);
         const m      = result.metrics || {};
         const cm     = result.confusion_matrix || {tp:0,tn:0,fp:0,fn:0};
-
-        window._lastScores = result.score_distribution || [];
+        const fi     = result.feature_importance || [];
+        const thr    = result.threshold_summary || {};
 
         $('resultsContent').innerHTML = `
           <div class="stats-grid">
-            <div class="stat-card"><div class="val">${(result.n_test||0).toLocaleString()}</div><div class="lbl">TEST ROWS</div></div>
-            <div class="stat-card"><div class="val warn">${(result.n_anomalies||0).toLocaleString()}</div><div class="lbl">ANOMALIES DETECTED</div></div>
+            <div class="stat-card"><div class="val">${(result.n_test||0).toLocaleString()}</div><div class="lbl">VALIDATION ROWS</div></div>
+            <div class="stat-card"><div class="val warn">${(result.n_anomalies||0).toLocaleString()}</div><div class="lbl">INFERENCE ANOMALIES</div></div>
             <div class="stat-card"><div class="val">${pct}%</div><div class="lbl">DETECTION RATE</div></div>
             <div class="stat-card"><div class="val ok">${m.f1!==undefined?(m.f1*100).toFixed(1)+'%':'—'}</div><div class="lbl">F1 SCORE</div></div>
           </div>
 
-          <div class="chart-wrap">
-            <div class="chart-title">ISOLATION FOREST SCORE DISTRIBUTION</div>
-            <div class="histogram-wrap" id="histWrap">
-              <canvas id="scoreCanvas"></canvas>
-            </div>
+          <div class="stats-grid" style="margin-top:14px">
+            <div class="stat-card"><div class="val">${m.roc_auc!==undefined?(m.roc_auc*100).toFixed(1)+'%':'—'}</div><div class="lbl">ROC AUC</div></div>
+            <div class="stat-card"><div class="val">${m.pr_auc!==undefined?(m.pr_auc*100).toFixed(1)+'%':'—'}</div><div class="lbl">PR AUC</div></div>
+            <div class="stat-card"><div class="val">${m.balanced_accuracy!==undefined?(m.balanced_accuracy*100).toFixed(1)+'%':'—'}</div><div class="lbl">BALANCED ACC</div></div>
+            <div class="stat-card"><div class="val">${m.mcc!==undefined?m.mcc.toFixed(3):'—'}</div><div class="lbl">MCC</div></div>
           </div>
 
           <div class="chart-wrap">
             ${renderConfusionMatrix(cm, m)}
+          </div>
+
+          <div class="chart-wrap">
+            ${renderFeatureImportance(fi)}
+          </div>
+
+          <div class="chart-wrap">
+            <div class="chart-title" style="margin-bottom:10px">THRESHOLD SELECTION</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.8">
+              <div>Selected threshold: <b style="color:var(--text)">${thr.best_threshold ?? '—'}</b></div>
+              <div>Best validation F1: <b style="color:var(--text)">${thr.best_validation_f1 !== undefined ? (thr.best_validation_f1*100).toFixed(1)+'%' : '—'}</b></div>
+              <div>Threshold sweep evaluated on the validation split to pick the operating point.</div>
+            </div>
           </div>
 
           <div class="chart-wrap">
@@ -900,10 +886,6 @@
           </div>
         `;
 
-        // Draw histogram after DOM is painted
-        requestAnimationFrame(()=>{ requestAnimationFrame(()=>{
-          drawHistogram('scoreCanvas', window._lastScores);
-        })});
       }
 
       // Anomalies panel 
@@ -969,7 +951,7 @@
         $('logBox').textContent = 'Starting pipeline...';
         setStatus('running');
         showTab('log');
-        window._lastScores = null;
+        window._featureImportance = null;
 
         try {
           const res = await fetch('/api/run', {
@@ -1008,12 +990,7 @@
         }
       }
 
-      // Redraw histogram on resize
-      window.addEventListener('resize', ()=>{
-        if (window._lastScores && $('panel-results').classList.contains('active')) {
-          requestAnimationFrame(()=>drawHistogram('scoreCanvas', window._lastScores));
-        }
-      });
+      window.addEventListener('resize', ()=>{});
     </script>
   </body>
 </html>
