@@ -198,7 +198,7 @@ Os dados gerados incluem atributos como:
 O sistema apresenta automaticamente métricas de desempenho dos modelos utilizados:
 
 - Accuracy: proporção de previsões corretas no total de casos avaliados
-- Precisionn: das instâncias classificadas como anomalia, quantas eram realmente anomalias (ajuda a reduzir falsos alarmes)
+- Precision: das instâncias classificadas como anomalia, quantas eram realmente anomalias (ajuda a reduzir falsos alarmes)
 - Recall: das anomalias reais, quantas foram corretamente detetadas (evita falsos negativos)
 - F1-Score: média harmónica entre precision e recall, útil em problemas com classes desbalanceadas como este (poucas anomalias face a dados normais)
 - Matriz de Confusão: tabela que mostra acertos e erros do modelo (verdadeiros positivos, falsos positivos, verdadeiros negativos e falsos negativos)
