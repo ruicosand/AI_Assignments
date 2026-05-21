@@ -25,11 +25,15 @@ if DATA_DIR not in sys.path:
     sys.path.insert(0, DATA_DIR)
 
 try:
-    import generator as gen
-    print(f"[OK] generator loaded from {gen.__file__}")
-except ImportError as e:
-    print(f"[ERROR] generator not found in {DATA_DIR}: {e}")
-    raise
+    import generator_testing as gen
+    print(f"[OK] benchmark generator loaded from {gen.__file__}")
+except ImportError:
+    try:
+        import generator as gen
+        print(f"[OK] generator loaded from {gen.__file__}")
+    except ImportError as e:
+        print(f"[ERROR] generator not found in {DATA_DIR}: {e}")
+        raise
 
 # JSON serialiser
 def to_json_safe(value):
@@ -78,7 +82,12 @@ def run_pipeline(job_id: str, params: dict):
 
         active_anomalies = params.get("anomalies", [])
         if "all" in active_anomalies:
-            active_anomalies = list(gen.ANOMALY_INJECTORS.keys())
+            if hasattr(gen, "ANOMALY_INJECTORS"):
+                active_anomalies = list(gen.ANOMALY_INJECTORS.keys())
+            elif hasattr(gen, "VALID_ANOMALIES"):
+                active_anomalies = list(gen.VALID_ANOMALIES)
+            else:
+                active_anomalies = []
 
         n_chargers = int(params.get("chargers", 3))
         sessions = int(params.get("sessions", 60))
@@ -87,25 +96,38 @@ def run_pipeline(job_id: str, params: dict):
         log(f"   Chargers: {n_chargers}  |  Sessions/charger: {sessions}  |  Anomaly rate: {anomaly_rate:.0%}")
         log(f"   Anomaly types: {active_anomalies or 'none'}")
 
-        labeled_df = gen.generate_dataset(
-            n_chargers=n_chargers,
-            sessions_per_charger=sessions,
-            active_anomalies=active_anomalies,
-            anomaly_rate=anomaly_rate,
-            seed=42,
-            include_labels=True,
-        )
-        inference_df = gen.generate_dataset(
-            n_chargers=n_chargers,
-            sessions_per_charger=sessions,
-            active_anomalies=active_anomalies,
-            anomaly_rate=anomaly_rate,
-            seed=43,
-            include_labels=False,
-        )
+        benchmark_meta = {}
+        if hasattr(gen, "generate_benchmark_pair"):
+            labeled_df, inference_df, benchmark_meta = gen.generate_benchmark_pair(
+                n_chargers=n_chargers,
+                sessions_per_charger=sessions,
+                seed=42,
+            )
+        else:
+            labeled_df = gen.generate_dataset(
+                n_chargers=n_chargers,
+                sessions_per_charger=sessions,
+                active_anomalies=active_anomalies,
+                anomaly_rate=anomaly_rate,
+                seed=42,
+                include_labels=True,
+            )
+            inference_df = gen.generate_dataset(
+                n_chargers=n_chargers,
+                sessions_per_charger=sessions,
+                active_anomalies=active_anomalies,
+                anomaly_rate=anomaly_rate,
+                seed=43,
+                include_labels=False,
+            )
         log(f"✅ Generated {len(labeled_df):,} labeled rows for training and {len(inference_df):,} unlabeled rows for inference.")
         log(f"   Training labels present: {'is_anomaly' in labeled_df.columns and 'anomaly_type' in labeled_df.columns}")
         log(f"   Inference labels present: {'is_anomaly' in inference_df.columns or 'anomaly_type' in inference_df.columns}")
+        if benchmark_meta:
+            log(f"   Train chargers: {', '.join(benchmark_meta.get('train_chargers', []))}")
+            log(f"   Inference chargers: {', '.join(benchmark_meta.get('inference_chargers', []))}")
+            log(f"   Train anomaly types: {', '.join(benchmark_meta.get('train_anomalies', []))}")
+            log(f"   Inference anomaly types: {', '.join(benchmark_meta.get('inference_anomalies', []))}")
 
         os.makedirs(DATA_DIR, exist_ok=True)
         train_path = os.path.join(DATA_DIR, "all_chargers_training_labeled.xlsx")
@@ -361,8 +383,52 @@ def run_models(train_df, inference_df, log, active_anomalies, anomaly_rate):
     if len(descriptions) >= 4:
         adf = pd.DataFrame(descriptions).fillna(0)
         num_cols = adf.select_dtypes(include="number").columns.tolist()
+        unique_points = len(adf[num_cols].drop_duplicates())
+        if unique_points < 2:
+            return {
+                "n_test": int(len(test)),
+                "n_inference": int(len(inference_features)),
+                "n_anomalies": int(inference_n_anom),
+                "threshold_summary": {
+                    "best_threshold": round(best_threshold, 4),
+                    "best_validation_f1": round(best_f1, 4),
+                    "validation_thresholds": threshold_rows,
+                },
+                "feature_importance": [
+                    {"feature": name, "importance": float(score)}
+                    for name, score in feature_importance
+                ],
+                "curves": {
+                    "precision_recall": {
+                        "precision": [float(x) for x in pr_precision],
+                        "recall": [float(x) for x in pr_recall],
+                    },
+                    "roc": {
+                        "fpr": [float(x) for x in roc_fpr] if roc_fpr is not None else [],
+                        "tpr": [float(x) for x in roc_tpr] if roc_tpr is not None else [],
+                    },
+                },
+                "anomaly_descriptions": descriptions,
+                "clusters": clusters,
+                "charger_anomaly_counts": charger_counts.to_dict(),
+                "metrics": {
+                    "accuracy": round(acc, 4),
+                    "precision": round(prec, 4),
+                    "recall": round(rec, 4),
+                    "f1": round(f1, 4),
+                    "roc_auc": round(roc_auc, 4),
+                    "pr_auc": round(pr_auc, 4),
+                    "balanced_accuracy": round(bal_acc, 4),
+                    "mcc": round(mcc, 4),
+                    "threshold": round(best_threshold, 4),
+                },
+                "confusion_matrix": {
+                    "tp": int(tp), "tn": int(tn),
+                    "fp": int(fp), "fn": int(fn),
+                },
+            }
         best_k, best_sil = 2, -1
-        for k in range(2, min(7, len(adf))):
+        for k in range(2, min(7, unique_points + 1)):
             km = KMeans(n_clusters=k, random_state=42, n_init=10)
             km.fit(adf[num_cols])
             s = silhouette_score(adf[num_cols], km.labels_)
